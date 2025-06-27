@@ -72,13 +72,42 @@ export class NavigationController {
       console.log("Toggled submenu:", isActive ? "shown" : "hidden");
       
       // Reset icon states
+      this.updateIconStates(ecommerceMenu, icon, iconnormal, mainIcon, isActive);
     });
-    
   }
   
- 
-
-
+  /**
+   * Updates icon states based on active status
+   */
+  private updateIconStates(
+    menuItem: HTMLElement, 
+    hoverIcon: HTMLElement, 
+    normalIcon: HTMLElement,
+    mainIcon: HTMLElement | null,
+    isActive: boolean
+  ): void {
+    if (isActive) {
+      // Active state
+      hoverIcon.style.transform = "rotate(180deg)";
+      hoverIcon.style.opacity = "1";
+      normalIcon.style.display = "none";
+      if (mainIcon && mainIcon instanceof HTMLImageElement) {
+        // Set main icon to hover state if it has data-hover attribute
+        const hoverSrc = mainIcon.getAttribute('data-hover');
+        if (hoverSrc) mainIcon.src = hoverSrc;
+      }
+    } else {
+      // Inactive state
+      hoverIcon.style.transform = "rotate(0deg)";
+      hoverIcon.style.opacity = "0";
+      normalIcon.style.display = "block";
+      if (mainIcon && mainIcon instanceof HTMLImageElement) {
+        // Reset main icon to normal state
+        const normalSrc = mainIcon.getAttribute('data-normal');
+        if (normalSrc) mainIcon.src = normalSrc;
+      }
+    }
+  }
   /**
    * Sets up global document click handler to close dropdown when clicking elsewhere
    */
@@ -101,9 +130,9 @@ export class NavigationController {
         ecommerceMenu.classList.remove("active");
         subMenuContainer.style.display = "none";
         
-        // if (hoverIcon && normalIcon) {
-        //   this.updateIconStates(ecommerceMenu, hoverIcon, normalIcon, mainIcon, false);
-        // }
+        if (hoverIcon && normalIcon) {
+          this.updateIconStates(ecommerceMenu, hoverIcon, normalIcon, mainIcon, false);
+        }
         
         console.log("Clicked outside - closed submenu and reset icons");
       }
@@ -112,4 +141,4 @@ export class NavigationController {
 }
 
 // Export a default instance for easy import
-export default NavigationController.getInstance();
+export default NavigationController;
