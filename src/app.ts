@@ -1,7 +1,6 @@
 import { router } from './router/Router.js';
 import { Layout } from './view/layout/index.js';
 import { ProducList } from './view/pages/ProductList.js';
-import { ContactPage } from './view/pages/ContactPage.js';
 import { CategoryList } from './view/pages/CategoryList.js';
 import { setupNavigationListeners } from './view/layout/navigation.js';
 import { AddCategory } from './view/pages/AddCategory.js';
@@ -31,11 +30,6 @@ export function App() {
     path: "/product",
     component: ProducList,
     title: "Về chúng tôi - TypeScript App",
-  });
-  router.addRoute({
-    path: '/contact',
-    component: ContactPage,
-    title: 'Liên hệ - TypeScript App',
   });
 
   router.addRoute({
