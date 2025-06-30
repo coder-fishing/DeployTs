@@ -2,6 +2,10 @@ import type { Category } from "~/types/category.type";
 import BaseService from "./BaseService";
 
 export default class CategoryService extends BaseService {
+  constructor() {
+    super("https://67c09c48b9d02a9f224a690e.mockapi.io/api/cate");
+  }
+
   async getAllCategories(): Promise<Category[]> {
     return this.getAll<Category>();
   }
@@ -25,5 +29,10 @@ export default class CategoryService extends BaseService {
   // Có thể thêm method riêng
   async getProductsByCategory(categoryId: string): Promise<Category[]> {
     return this.get<Category[]>(`/category/${categoryId}`);
+  }
+
+  // Server-side pagination method
+  async getCategoriesPaginated(page: number = 1, limit: number = 10) {
+    return this.getPaginated<Category>(page, limit);
   }
 }

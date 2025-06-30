@@ -1,7 +1,7 @@
 import BaseService from './BaseService.js';
 import type { Product } from '~/types/product.type.js';
 
-export default class DefaultService extends BaseService {
+export default class ProductService extends BaseService {
   constructor() {
     super("https://67c09c48b9d02a9f224a690e.mockapi.io/api/product");
   }
@@ -29,5 +29,10 @@ export default class DefaultService extends BaseService {
   // Có thể thêm method riêng
   async getProductsByCategory(categoryId: string): Promise<Product[]> {
     return this.get<Product[]>(`/category/${categoryId}`);
+  }
+
+  // Server-side pagination method
+  async getProductsPaginated(page: number = 1, limit: number = 10) {
+    return this.getPaginated<Product>(page, limit);
   }
 }

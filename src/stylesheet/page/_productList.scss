@@ -203,6 +203,7 @@
         border-radius: 0.75rem ;
         box-shadow: 0px 4px 30px 0px rgba(46, 45, 116, 0.05);
         background-color: $neutralWhite;
+        min-width: 100%;
         
         
         
@@ -210,6 +211,7 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            
         }
 
         thead {
@@ -288,7 +290,7 @@
 
         // Column widths
         th, td {
-            &:nth-child(1) { width: 35%; } // Category name column
+            &:nth-child(1) { min-width: 35%; width: 35%; } // Category name column
             &:nth-child(2) { width: 15%; } // Sold column
             &:nth-child(3) { width: 15%; } // Stock column
             &:nth-child(4) { width: 20%; } // Added column

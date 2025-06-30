@@ -1,6 +1,6 @@
 export interface Route {
   path: string;
-  component: () => HTMLElement | string;
+  component: () => HTMLElement | string | Promise<HTMLElement>;
   title?: string;
 }
 
@@ -19,7 +19,7 @@ export class Router {
     this.routes.set(route.path, route);
   }
 
-  navigate(path: string, pushState: boolean = true): void {
+  async navigate(path: string, pushState: boolean = true): Promise<void> {
     const route = this.routes.get(path);
     
     if (!route) {
@@ -39,8 +39,45 @@ export class Router {
       document.title = route.title;
     }
 
-    // Render the component
-    this.render(route.component());
+    // Handle async components
+    try {
+      const component = route.component();
+      if (component instanceof Promise) {
+        // Show loading state
+        this.renderLoading();
+        const resolvedComponent = await component;
+        this.render(resolvedComponent);
+      } else {
+        this.render(component);
+      }
+    } catch (error) {
+      console.error('Error rendering component:', error);
+      this.renderError();
+    }
+  }
+
+  private renderLoading(): void {
+    const contentElement = document.querySelector('#main-content');
+    if (contentElement) {
+      contentElement.innerHTML = `
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Loading...</p>
+        </div>
+      `;
+    }
+  }
+
+  private renderError(): void {
+    const contentElement = document.querySelector('#main-content');
+    if (contentElement) {
+      contentElement.innerHTML = `
+        <div class="error-container">
+          <h3>Error</h3>
+          <p>Something went wrong. Please try again.</p>
+        </div>
+      `;
+    }
   }
   private render(component: HTMLElement | string): void {
     const contentElement = document.querySelector('#content');

@@ -1,5 +1,15 @@
 import axios from 'axios';
 
+// Interface for paginated response
+export interface PaginatedResponse<T> {
+  data: T[];
+  totalItems: number;
+  currentPage: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export default class BaseService {
   protected baseUrl: string = "https://67c09c48b9d02a9f224a690e.mockapi.io/api";
 
@@ -59,5 +69,31 @@ export default class BaseService {
 
   async deleteById<T>(id: string): Promise<T> {
     return this.delete<T>(`/${id}`);
+  }
+
+  // Generic pagination method
+  async getPaginated<T>(page: number = 1, limit: number = 10): Promise<PaginatedResponse<T>> {
+    try {
+      const url = `?page=${page}&limit=${limit}`;
+      const paginatedData = await this.get<T[]>(url);
+      
+      // MockAPI doesn't return pagination metadata, so we need to calculate it
+      // Make a request to get total count (this is a limitation of MockAPI)
+      const allData = await this.getAll<T>();
+      const totalItems = allData.length;
+      const totalPages = Math.ceil(totalItems / limit);
+      
+      return {
+        data: paginatedData,
+        totalItems,
+        currentPage: page,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      };
+    } catch (error) {
+      console.error('Error fetching paginated data:', error);
+      throw error;
+    }
   }
 }
