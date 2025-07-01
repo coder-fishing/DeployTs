@@ -18,8 +18,12 @@ export const AddProduct = (): string => {
                     ${groupButton(BUTTON_GROUPS.FORM)} 
             </div>
             ${productForm({
-                productData: {},
-                mode: 'add',})}
+                productData: {} as any,
+                mode: 'add',
+                onSubmit: (data: any) => {
+                    console.log('Product form submitted:', data);
+                }
+            })}
 
         </div>
     `

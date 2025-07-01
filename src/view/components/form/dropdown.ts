@@ -13,7 +13,7 @@ export interface DropdownProps {
   placeholder?: string;
 }
 
-export const Dropdown = ({ id, label, value, options, placeholder = "Select..." }: DropdownProps): string => {
+export const Dropdown = ({ id, label: _label, value, options, placeholder = "Select..." }: DropdownProps): string => {
   return `
     <div class="dropdown" id="${id}">
       <div class="dropdown-group">

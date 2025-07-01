@@ -80,7 +80,7 @@ export class NavigationController {
    * Updates icon states based on active status
    */
   private updateIconStates(
-    menuItem: HTMLElement, 
+    _menuItem: HTMLElement, 
     hoverIcon: HTMLElement, 
     normalIcon: HTMLElement,
     mainIcon: HTMLElement | null,

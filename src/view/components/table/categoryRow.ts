@@ -47,7 +47,7 @@ export const CategoryRow = ({ category }: { category: Category }): string => {
                 )}
                 ${renderCell(
                   `<div class="product-table__item--added">${formatters.formatDate(
-                    category.create_at
+                    category.create_at ? new Date(category.create_at) : category.createdAt
                   )}</div>`,
                   "product-table__item"
                 )}

@@ -18,12 +18,8 @@ export const AddCategory = (): string => {
                 ${groupButton(BUTTON_GROUPS.FORM)} 
         </div>
         ${categoryForm({
-            categoryData: {},
-            mode: 'add',
-            onSubmit: () => {
-                // Handle form submission logic here
-                console.log('Form submitted');
-            }
+            categoryData: {} as any,
+            mode: 'add'
         })}
     </div>
     `
