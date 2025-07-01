@@ -7,6 +7,10 @@ export abstract class BaseController<T> {
     protected totalItems: number = 0;
     protected totalPages: number = 0;
 
+    // Sorting state
+    protected sortField: string = '';
+    protected sortOrder: 'asc' | 'desc' = 'asc';
+
     // UI state management
     protected loadingCallbacks: (() => void)[] = [];
     protected errorCallbacks: ((error: any) => void)[] = [];
@@ -35,6 +39,66 @@ export abstract class BaseController<T> {
             totalItems: this.totalItems,
             totalPages: this.totalPages,
         };
+    }
+
+    /**
+     * Get current sort state
+     */
+    public getSortState() {
+        return {
+            sortField: this.sortField,
+            sortOrder: this.sortOrder,
+        };
+    }
+
+    /**
+     * Set sort field and order
+     */
+    public setSorting(field: string, order: 'asc' | 'desc'): void {
+        this.sortField = field;
+        this.sortOrder = order;
+        this.currentPage = 1; // Reset to first page when sorting
+    }
+
+    /**
+     * Toggle sort order for a field
+     */
+    public toggleSort(field: string): void {
+        if (this.sortField === field) {
+            // Same field, toggle order
+            this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            // New field, default to asc
+            this.sortField = field;
+            this.sortOrder = 'asc';
+        }
+        this.currentPage = 1; // Reset to first page when sorting
+    }
+
+    /**
+     * Sort data locally (client-side sorting)
+     */
+    protected sortData(data: T[], field: string, order: 'asc' | 'desc'): T[] {
+        if (!field) return data;
+
+        return [...data].sort((a: any, b: any) => {
+            let aValue = a[field];
+            let bValue = b[field];
+
+            // Handle null/undefined values
+            if (aValue == null && bValue == null) return 0;
+            if (aValue == null) return order === 'asc' ? -1 : 1;
+            if (bValue == null) return order === 'asc' ? 1 : -1;
+
+            // Convert to string for comparison if needed
+            if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+            if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+
+            // Compare values
+            if (aValue < bValue) return order === 'asc' ? -1 : 1;
+            if (aValue > bValue) return order === 'asc' ? 1 : -1;
+            return 0;
+        });
     }
 
     /**
@@ -84,9 +148,19 @@ export abstract class BaseController<T> {
             start: number;
             end: number;
         };
+        sortInfo: {
+            sortField: string;
+            sortOrder: 'asc' | 'desc';
+        };
     }> {
         try {
             const result = await this.getServicePaginated(page, this.itemsPerPage);
+            
+            // Apply client-side sorting if sort field is set
+            let sortedData = result.data;
+            if (this.sortField) {
+                sortedData = this.sortData(result.data, this.sortField, this.sortOrder);
+            }
             
             // Update internal state
             this.currentPage = result.currentPage;
@@ -97,7 +171,7 @@ export abstract class BaseController<T> {
             const end = Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
 
             return {
-                data: result.data,
+                data: sortedData,
                 paginationInfo: {
                     currentPage: this.currentPage,
                     itemsPerPage: this.itemsPerPage,
@@ -105,6 +179,10 @@ export abstract class BaseController<T> {
                     totalPages: this.totalPages,
                     start,
                     end,
+                },
+                sortInfo: {
+                    sortField: this.sortField,
+                    sortOrder: this.sortOrder,
                 },
             };
         } catch (error) {
@@ -182,6 +260,14 @@ export abstract class BaseController<T> {
      * Retry loading current page
      */
     public async retryLoadCurrentPage(): Promise<void> {
+        await this.loadDataForPageWithUI(this.currentPage);
+    }
+
+    /**
+     * Sort and reload current page
+     */
+    public async sortAndReload(field: string): Promise<void> {
+        this.toggleSort(field);
         await this.loadDataForPageWithUI(this.currentPage);
     }
 }

@@ -135,6 +135,22 @@
         justify-content: space-between;
         align-items: flex-start;
         align-self: stretch;
+        gap: 1rem;
+        
+        // Container for filters (tag and status)
+        .filters-container {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .tag-filter-container {
+            flex-shrink: 0;
+        }
+        
+        .status-filter-container {
+            flex-shrink: 0;
+        }
         
         &__tag{
             display: flex;
@@ -478,8 +494,8 @@
     }
 
     .active {
-        background-color: #7c3aed;
-        color: white;
+        background-color:  $primary500;
+        color: $primary500;
     }
     .dots {
         width: 2rem;

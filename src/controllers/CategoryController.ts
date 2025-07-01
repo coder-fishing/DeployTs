@@ -41,9 +41,9 @@ export class CategoryController extends BaseController<Category> {
     /**
      * Get categories with pagination (backward compatibility)
      */
-    public async getCategoriesPaginated(page: number = 1, limit: number = 10) {
+    public async getCategoriesPaginated(page: number = 1, limit: number = 10, sort?: string , order?: string  ) {
         try {
-            const result = await this.categoryService.getCategoriesPaginated(page, limit);
+            const result = await this.categoryService.getCategoriesPaginated(page, limit, sort, order);
             return result;
         } catch (error) {
             console.error('Error fetching paginated categories:', error);

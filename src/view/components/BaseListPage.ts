@@ -11,7 +11,7 @@ interface BaseListPageConfig<T> {
   controller: BaseController<T>;
   breadcrumbConfig: any;
   buttonConfig: any;
-  tableRenderer: (data: T[]) => string;
+  tableRenderer: (data: T[], sortField?: string, sortOrder?: 'asc' | 'desc') => string;
   tagFilter?: {
     filters: any[];
     currentFilter: any;
@@ -25,7 +25,7 @@ export class BaseListPage<T> {
   private controller: BaseController<T>;
   private breadcrumbConfig: any;
   private buttonConfig: any;
-  private tableRenderer: (data: T[]) => string;
+  private tableRenderer: (data: T[], sortField?: string, sortOrder?: 'asc' | 'desc') => string;
   private tagFilter?: { filters: any[]; currentFilter: any };
   private className: string;
   private title: string;
@@ -68,11 +68,17 @@ export class BaseListPage<T> {
         // Update table
         const tableContainer = document.querySelector('.product-table-container');
         if (tableContainer) {
-          tableContainer.innerHTML = this.tableRenderer(result.data);
+          tableContainer.innerHTML = this.tableRenderer(
+            result.data, 
+            result.sortInfo?.sortField || '', 
+            result.sortInfo?.sortOrder || 'asc'
+          );
         }
         hideOverlayLoading();
         // Update pagination
         this.updatePaginationDisplay(result.paginationInfo);
+        // Setup sort event listeners
+        this.setupSortEventListeners();
       }
     });
   }
@@ -118,6 +124,19 @@ export class BaseListPage<T> {
     (window as any).retryLoadData = () => {
       this.controller.retryLoadCurrentPage();
     };
+  }
+
+  // Setup sort event listeners
+  private setupSortEventListeners(): void {
+    const sortableHeaders = document.querySelectorAll('.sortable-header[data-field]');
+    sortableHeaders.forEach(header => {
+      header.addEventListener('click', async (e) => {
+        const field = (e.currentTarget as HTMLElement).dataset.field;
+        if (field) {
+          await this.controller.sortAndReload(field);
+        }
+      });
+    });
   }
 
   // Generate the HTML content

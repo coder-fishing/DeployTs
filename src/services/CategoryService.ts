@@ -32,7 +32,7 @@ export default class CategoryService extends BaseService {
   }
 
   // Server-side pagination method
-  async getCategoriesPaginated(page: number = 1, limit: number = 10) {
-    return this.getPaginated<Category>(page, limit);
+  async getCategoriesPaginated(page: number = 1, limit: number = 10, sort?: string, order?: string){
+    return this.getPaginated<Category>(page, limit, sort, order);
   }
 }

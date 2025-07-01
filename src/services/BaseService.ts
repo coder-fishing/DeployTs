@@ -72,9 +72,10 @@ export default class BaseService {
   }
 
   // Generic pagination method
-  async getPaginated<T>(page: number = 1, limit: number = 10): Promise<PaginatedResponse<T>> {
+  async getPaginated<T>(page: number = 1, limit: number = 10, sort?: string, order?:string): Promise<PaginatedResponse<T>> {
     try {
-      const url = `?page=${page}&limit=${limit}`;
+      const url = `?page=${page}&limit=${limit}&sortBy=${sort || ''}&order=${order || ''}`;
+      console.log(`Fetching paginated data from: ${this.baseUrl}${url}`);
       const paginatedData = await this.get<T[]>(url);
       
       // MockAPI doesn't return pagination metadata, so we need to calculate it
