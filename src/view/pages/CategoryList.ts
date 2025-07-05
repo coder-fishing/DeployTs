@@ -18,5 +18,12 @@ export const CategoryList = async (): Promise<HTMLElement> => {
     pageSize: 3
   });
 
-  return await baseListPage.render();
+  const container = await baseListPage.render();
+  
+  // Initialize search functionality after DOM is rendered
+  setTimeout(() => {
+    categoryController.initializeSearch();
+  }, 100);
+
+  return container;
 };

@@ -35,4 +35,10 @@ export default class CategoryService extends BaseService {
   async getCategoriesPaginated(page: number = 1, limit: number = 10, sort?: string, order?: string){
     return this.getPaginated<Category>(page, limit, sort, order);
   }
+
+  // Search categories
+  async searchCategories(query: string, page: number = 1, limit: number = 10): Promise<Category[]> {
+    const paginated = await this.search<Category>(query, page, limit);
+    return paginated.items || paginated.data || [];
+  }
 }

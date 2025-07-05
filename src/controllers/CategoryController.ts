@@ -113,6 +113,212 @@ export class CategoryController extends BaseController<Category> {
             throw error;
         }
     }
+
+    /**
+     * Search categories by query
+     */
+    public async searchCategories(query: string, page: number, limit: number): Promise<Category[]> {
+        return this.categoryService.searchCategories(query, page, limit);
+    }
+
+    /**
+     * Search categories with pagination support
+     */
+    public async searchCategoriesWithPagination(query: string, page: number = 1): Promise<void> {
+        try {
+            console.log(`🔍 Searching categories for: "${query}" (page ${page})`);
+            
+            // Get all search results first
+            const allResults = await this.searchCategories(query, 1, 1000);
+            console.log(`✅ Found ${allResults.length} total category search results`);
+            
+            // Apply pagination
+            const pageSize = this.itemsPerPage || 6;
+            const totalItems = allResults.length;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const paginatedResults = allResults.slice(startIndex, endIndex);
+            
+            // Create result object
+            const searchResult = {
+                data: paginatedResults,
+                paginationInfo: {
+                    currentPage: page,
+                    itemsPerPage: pageSize,
+                    totalItems: totalItems,
+                    totalPages: totalPages,
+                    start: startIndex + 1,
+                    end: Math.min(endIndex, totalItems)
+                },
+                sortInfo: {
+                    sortField: this.sortField,
+                    sortOrder: this.sortOrder
+                },
+                isSearchResult: true,
+                searchQuery: query,
+                allSearchResults: allResults
+            };
+
+            this.triggerSuccess(searchResult);
+            
+        } catch (error) {
+            console.error('❌ Error during category paginated search:', error);
+            this.triggerError(error);
+        }
+    }
+
+    /**
+     * Enhanced search handler for multiple search components with debounce
+     */
+    public handleSearch(): void {
+        // Multiple selectors to find all search inputs on the page
+        const searchSelectors = [
+            '.search-input',
+            '.search-bar_input', 
+            '.search-bar-input',
+            'input[placeholder*="Search"]',
+            'input[placeholder*="search"]',
+            'input[type="search"]',
+            '[data-search="true"]'
+        ];
+        
+        let foundInputs = 0;
+        const debounceDelay = 300;
+        let searchTimeout: number | null = null;
+        
+        // Try each selector to find all search inputs
+        searchSelectors.forEach(selector => {
+            const searchInputs = document.querySelectorAll<HTMLInputElement>(selector);
+            
+            if (searchInputs.length > 0) {
+                console.log(`🔍 Found ${searchInputs.length} category search input(s) with selector: ${selector}`);
+                foundInputs += searchInputs.length;
+                
+                // Add event listeners to all found inputs
+                searchInputs.forEach((searchInput, index) => {
+                    console.log(`✅ Setting up category search listener for input ${index + 1}:`, {
+                        class: searchInput.className,
+                        placeholder: searchInput.placeholder,
+                        id: searchInput.id
+                    });
+                    
+                    // Add debounced search listener
+                    searchInput.addEventListener('input', async (event) => {
+                        const query = (event.target as HTMLInputElement).value.trim();
+                        
+                        // Clear previous timeout
+                        if (searchTimeout) {
+                            clearTimeout(searchTimeout);
+                        }
+                        
+                        // Set new timeout for debounced search
+                        searchTimeout = window.setTimeout(async () => {
+                            if (query.length >= 2) {
+                                try {
+                                    console.log(`🔍 Searching categories for: "${query}"`);
+                                    // Get all search results first
+                                    const allResults = await this.searchCategories(query, 1, 1000); // Get large number to get all results
+                                    console.log(`✅ Category search completed: found ${allResults.length} categories`);
+                                    
+                                    // Apply pagination to search results
+                                    const pageSize = this.itemsPerPage || 6;
+                                    const totalItems = allResults.length;
+                                    const totalPages = Math.ceil(totalItems / pageSize);
+                                    const paginatedResults = allResults.slice(0, pageSize); // Show only first page
+                                    
+                                    // Trigger success callback to update table with search results
+                                    const searchResult = {
+                                        data: paginatedResults, // Show only first 6 items
+                                        paginationInfo: {
+                                            currentPage: 1,
+                                            itemsPerPage: pageSize,
+                                            totalItems: totalItems,
+                                            totalPages: totalPages,
+                                            start: 1,
+                                            end: Math.min(pageSize, totalItems)
+                                        },
+                                        sortInfo: {
+                                            sortField: '',
+                                            sortOrder: 'asc' as const
+                                        },
+                                        isSearchResult: true,
+                                        searchQuery: query,
+                                        allSearchResults: allResults // Store all results for pagination
+                                    };
+                                    
+                                    this.triggerSuccess(searchResult);
+                                    
+                                } catch (error) {
+                                    console.error('❌ Error during category search:', error);
+                                    this.triggerError(error);
+                                }
+                            } else if (query.length === 0) {
+                                console.log('🧹 Category search cleared');
+                                
+                                // Reload original data when search is cleared
+                                this.loadDataForPageWithUI(1);
+                            }
+                        }, debounceDelay);
+                    });
+                    
+                    // Add focus event for debugging
+                    searchInput.addEventListener('focus', () => {
+                        console.log(`🎯 Category search input ${index + 1} focused`);
+                    });
+                });
+            }
+        });
+    }
+    
+    /**
+     * Initialize search with automatic setup and retry
+     */
+    public initializeSearch(): void {
+        console.log('🚀 Initializing category search functionality...');
+        
+        // Setup search immediately
+        this.handleSearch();
+        
+        // Setup again after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('📄 DOM loaded, setting up category search again...');
+                setTimeout(() => this.handleSearch(), 100);
+            });
+        }
+        
+        // Watch for new search inputs being added dynamically
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    const addedNodes = Array.from(mutation.addedNodes);
+                    const hasSearchInputs = addedNodes.some(node => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const element = node as Element;
+                            return element.matches('input') || 
+                                   element.querySelector('input') ||
+                                   element.matches('.search-input') ||
+                                   element.querySelector('.search-input');
+                        }
+                        return false;
+                    });
+                    
+                    if (hasSearchInputs) {
+                        console.log('🔄 New category search inputs detected, setting up handlers...');
+                        setTimeout(() => this.handleSearch(), 500);
+                    }
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        console.log('✅ Category search initialization completed with MutationObserver');
+    }
 }
 
 export default CategoryController;

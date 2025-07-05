@@ -107,9 +107,14 @@ export class BaseListPage<T> {
     // Check if we're in search mode
     if (this.currentSearchQuery) {
       // Use search pagination
-      const productController = this.controller as any;
-      if (productController.searchProductsWithPagination) {
-        await productController.searchProductsWithPagination(this.currentSearchQuery, page);
+      const controller = this.controller as any;
+      if (controller.searchProductsWithPagination) {
+        await controller.searchProductsWithPagination(this.currentSearchQuery, page);
+      } else if (controller.searchCategoriesWithPagination) {
+        await controller.searchCategoriesWithPagination(this.currentSearchQuery, page);
+      } else {
+        console.warn('Controller does not support search pagination');
+        await this.controller.loadDataForPageWithUI(page);
       }
     } else {
       // Use regular pagination
