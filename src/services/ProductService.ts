@@ -66,46 +66,14 @@ export default class ProductService extends BaseService {
 
     // Filter by status
     if (filters.status && filters.status !== 'All Status' && filters.status !== 'All') {
+      products.forEach(product => {
+        const productStatus = product.status || '';})
+        console.log('Filtering by status:', filters.status);
       products = products.filter(product => {
-        const productStatus = product.status || 'Draft';
+        const productStatus = product.status || '';
         return productStatus.toLowerCase() === filters.status!.toLowerCase();
       });
     }
-
-    // Filter by category
-    if (filters.category && filters.category !== 'All') {
-      products = products.filter(product => {
-        const productCategory = product.category || '';
-        return productCategory.toLowerCase().includes(filters.category!.toLowerCase());
-      });
-    }
-
-    // Filter by price range
-    if (filters.minPrice !== undefined) {
-      products = products.filter(product => 
-        (product.price || 0) >= filters.minPrice!
-      );
-    }
-
-    if (filters.maxPrice !== undefined) {
-      products = products.filter(product => 
-        (product.price || 0) <= filters.maxPrice!
-      );
-    }
-
-    // Filter by search term (name or description)
-    if (filters.searchTerm) {
-      const searchLower = filters.searchTerm.toLowerCase();
-      products = products.filter(product => {
-        const name = (product.name || '').toLowerCase();
-        const description = (product.description || '').toLowerCase();
-        const sku = (product.sku || '').toLowerCase();
-        return name.includes(searchLower) || 
-               description.includes(searchLower) || 
-               sku.includes(searchLower);
-      });
-    }
-
     return products;
   }
 

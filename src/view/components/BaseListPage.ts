@@ -6,6 +6,7 @@ import { Pagination } from '~/view/components/pagination';
 import { caretLeft } from '~/assets/icon';
 import { hideOverlayLoading, showOverlayLoading } from '~/view/components/loading';
 import type { BaseController } from '~/controllers/BaseController';
+import ProductController from '../../controllers/ProductController';
 
 interface BaseListPageConfig<T> {
   controller: BaseController<T>;
@@ -31,6 +32,7 @@ export class BaseListPage<T> {
   private title: string;
   private pageSize: number;
   private currentSearchQuery: string = ''; // Track current search query
+  private currentFilterTag: string = ''; // Track current filter tag
 
   constructor(config: BaseListPageConfig<T>) {
     this.controller = config.controller;
@@ -81,15 +83,29 @@ export class BaseListPage<T> {
         if (result.isSearchResult) {
           // Track current search query
           this.currentSearchQuery = result.searchQuery || '';
+          this.currentFilterTag = ''; // Clear filter tag
           // Show search info and pagination
           this.showSearchResults(result.data.length, result.searchQuery);
           this.updatePaginationDisplay(result.paginationInfo);
           console.log('Search pagination info:', result.paginationInfo);
-        } else {
-          // Clear search query
+        } 
+        // Check if this is a filter result (only for ProductController)
+        else if (result.isFilterResult) {
+          // Track current filter tag
+          this.currentFilterTag = result.filterTag || '';
+          this.currentSearchQuery = ''; // Clear search query
+          // Show filter info and pagination
+          this.showFilterResults(result.data.length, result.filterTag, result.paginationInfo.totalItems);
+          this.updatePaginationDisplay(result.paginationInfo);
+          console.log('Filter pagination info:', result.paginationInfo);
+        } 
+        else {
+          // Clear both search and filter
           this.currentSearchQuery = '';
-          // Show pagination and hide search info
+          this.currentFilterTag = '';
+          // Show pagination and hide search/filter info
           this.hideSearchResults();
+          this.hideFilterResults();
           this.showPagination();
           if (result.paginationInfo) {
             this.updatePaginationDisplay(result.paginationInfo);
@@ -116,7 +132,19 @@ export class BaseListPage<T> {
         console.warn('Controller does not support search pagination');
         await this.controller.loadDataForPageWithUI(page);
       }
-    } else {
+    } 
+    // Check if we're in filter mode (only for ProductController)
+    else if (this.currentFilterTag) {
+      // Use filter pagination for ProductController only
+      const productController = this.controller as any;
+      if (productController instanceof ProductController && productController.handleTagFilterWithPagination) {
+        await productController.handleTagFilterWithPagination(this.currentFilterTag, page);
+      } else {
+        console.warn('Filter pagination only supported for ProductController');
+        await this.controller.loadDataForPageWithUI(page);
+      }
+    } 
+    else {
       // Use regular pagination
       await this.controller.loadDataForPageWithUI(page);
     }
@@ -173,7 +201,7 @@ export class BaseListPage<T> {
     });
   }
 
-  // Setup tag filter event listeners
+  // Setup tag filter event listeners (only for ProductController)
   private setupTagFilterListeners(): void {
     if (!this.tagFilter) return;
 
@@ -191,102 +219,15 @@ export class BaseListPage<T> {
         // Add active class to clicked tag
         tagElement.classList.add('item-active');
         
-        // Handle different tag filters
-        await this.handleTagFilter(tagText);
+        // Handle tag filter for ProductController specifically
+        const productController = this.controller as any;
+        if (productController instanceof ProductController && productController.handleTagFilterWithPagination) {
+          await productController.handleTagFilterWithPagination(tagText, 1);
+        } else {
+          console.warn('Tag filter only supported for ProductController');
+        }
       });
     });
-  }
-
-  // Handle tag filter logic
-  private async handleTagFilter(tagText: string): Promise<void> {
-    try {
-      console.log(`🔍 Filtering by tag: ${tagText}`);
-      
-      // Show loading
-      const tableContainer = document.querySelector('.product-table-container');
-      if (tableContainer) {
-        showOverlayLoading();
-      }
-
-      let filteredData: T[] = [];
-
-      // Handle special Published tag
-      if (tagText === 'Published') {
-        console.log('📊 Getting published products...');
-        
-        // Check if controller has getPublished method (for ProductController)
-        const controller = this.controller as any;
-        if (controller.getPublished && typeof controller.getPublished === 'function') {
-          filteredData = await controller.getPublished();
-          console.log('✅ Published products loaded:', filteredData.length);
-        } else {
-          console.warn('⚠️ getPublished method not found on controller');
-        }
-      } 
-      // Handle other tags (category filtering)
-      else if (tagText !== 'All') {
-        // Get all data and filter by category
-        const allData = await (this.controller as any).getAllProducts?.() || [];
-        filteredData = allData.filter((item: any) => {
-          const category = item.category || '';
-          return category.toLowerCase().includes(tagText.toLowerCase());
-        });
-        console.log(`🏷️ Filtered by category "${tagText}":`, filteredData.length);
-      } 
-      // Handle "All" tag
-      else {
-        filteredData = await (this.controller as any).getAllProducts?.() || [];
-        console.log('📦 All products loaded:', filteredData.length);
-      }
-
-      // Update table with filtered data
-      if (tableContainer) {
-        tableContainer.innerHTML = this.tableRenderer(filteredData, '', 'asc');
-        hideOverlayLoading();
-      }
-
-      // Update pagination for filtered data
-      // this.updatePaginationForFilteredData(filteredData);
-
-      // Setup sort listeners again
-      this.setupSortEventListeners();
-
-    } catch (error) {
-      console.error('❌ Error filtering by tag:', error);
-      hideOverlayLoading();
-      
-      const tableContainer = document.querySelector('.product-table-container');
-      if (tableContainer) {
-        tableContainer.innerHTML = `
-          <div class="error-message">
-            <h3>Error filtering data</h3>
-            <p>Unable to filter by "${tagText}". Please try again.</p>
-          </div>
-        `;
-      }
-    }
-  }
-
-  // Update pagination for filtered data
-  private updatePaginationForFilteredData(filteredData: T[]): void {
-    const paginationContainer = document.querySelector('.pagination-container');
-    if (paginationContainer) {
-      // For simplicity, show all filtered data on one page
-      // Or implement client-side pagination
-      const totalItems = filteredData.length;
-      
-      // Clear existing pagination
-      paginationContainer.innerHTML = '';
-      
-      if (totalItems > 0) {
-        const paginationInfo = document.createElement('div');
-        paginationInfo.className = 'pagination-info';
-        paginationInfo.innerHTML = `
-          <span>Showing ${totalItems} filtered results</span>
-        `;
-        paginationContainer.appendChild(paginationInfo);
-      }
-    }
   }
 
   // Show search results info
@@ -302,6 +243,7 @@ export class BaseListPage<T> {
       searchInfo.remove();
     }
   }
+
 
   // Hide pagination
   private hidePagination(): void {
@@ -320,6 +262,19 @@ export class BaseListPage<T> {
     }
   }
 
+  // Show filter results info (only for ProductController)
+  private showFilterResults(resultCount: number, tag?: string, totalItems?: number): void {
+    this.hideFilterResults();   
+  }
+
+  // Hide filter results info
+  private hideFilterResults(): void {
+    const filterInfo = document.querySelector('.filter-results-info');
+    if (filterInfo) {
+      filterInfo.remove();
+    }
+  }
+
   // Setup global clear search function
   private setupGlobalClearSearch(): void {
     (window as any).clearSearch = () => {
@@ -331,6 +286,44 @@ export class BaseListPage<T> {
       
       // Trigger search with empty query to reset
       this.controller.handleSearch('');
+    };
+
+    // Setup global clear filter function (only for ProductController)
+    (window as any).clearFilter = () => {
+      console.log('🧹 Clearing filter...');
+      this.currentFilterTag = '';
+      
+      // Check if this is ProductController
+      const productController = this.controller as any;
+      if (!(productController instanceof ProductController)) {
+        console.warn('Clear filter only supported for ProductController');
+        return;
+      }
+      
+      // Click "All" tag to reset filter or reload data
+      const allTags = document.querySelectorAll('.tag-add-searchbar__tag--item');
+      let allTagFound = false;
+      
+      allTags.forEach(tag => {
+        const tagText = tag.querySelector('.tag-add-searchbar__tag--item-element')?.textContent;
+        if (tagText === 'All' || tagText === 'All Status') {
+          // Remove active class from all tags
+          allTags.forEach(t => t.classList.remove('item-active'));
+          // Add active class to "All" tag
+          tag.classList.add('item-active');
+          allTagFound = true;
+        }
+      });
+      
+      // Fallback: reload page 1 if no "All" tag found
+      if (!allTagFound) {
+        this.updateTableAndPagination(1);
+      } else {
+        // Trigger filter with "All" to reset
+        if (productController.handleTagFilterWithPagination) {
+          productController.handleTagFilterWithPagination('All', 1);
+        }
+      }
     };
   }
 
@@ -390,8 +383,7 @@ export class BaseListPage<T> {
     // Setup callbacks and global functions
     this.setupControllerCallbacks();
     this.setupGlobalRetry();
-    this.setupGlobalClearSearch();
-    this.setupGlobalClearSearch();
+    this.setupGlobalClearSearch(); // This includes both clearSearch and clearFilter functions
 
     // Set HTML content
     container.innerHTML = this.generateHTML();

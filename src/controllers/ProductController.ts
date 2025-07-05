@@ -39,16 +39,33 @@ export class ProductController extends BaseController<Product> {
         }
     }
 
-    public async getPublished(){
-        try{
+    // src/controllers/ProductController.ts
+    public async getTagFilter(tag: string): Promise<Product[]> {
+        try {
             const products = await this.productService.getAllProducts();
             
-            const publishedProducts = products.filter(product => {
-                return product.status.toLowerCase() === 'published';
-            });
-            console.log('✅ Fetched published products:', publishedProducts);
+            let publishedProducts: Product[] = [];
+            
+            if (tag === 'Published') {
+                publishedProducts = products.filter(product => {
+                    return product.status?.toLowerCase() === 'published';
+                });
+            } else if (tag === 'Draft') {
+                publishedProducts = products.filter(product => {
+                    return product.status?.toLowerCase() === 'draft';
+                });
+            } else if (tag === 'Low Stock') {
+                publishedProducts = products.filter(product => {
+                    return product.status?.toLowerCase() === 'low stock';
+                });   
+            } else  {
+                publishedProducts = products;
+            }
+
+            console.log('✅ Fetched published products:', publishedProducts.length);
+            console.table(publishedProducts)
             return publishedProducts;
-           
+            
         } catch (error) {
             console.error('❌ Error fetching published products:', error);
             throw error;
@@ -324,62 +341,62 @@ export class ProductController extends BaseController<Product> {
         console.log('✅ Search initialization completed with MutationObserver');
     }
 
-    // /**
-    //  * Handle tag filter for products
-    //  */
-    // public async handleTagFilter(tagText: string): Promise<void> {
-    //     try {
-    //         console.log(`🔍 ProductController filtering by tag: ${tagText}`);
+    /**
+     * Handle tag filter with pagination support
+     */
+    public async handleTagFilterWithPagination(tag: string, page: number = 1): Promise<void> {
+        try {
+            console.log(`🏷️ Filtering by tag: "${tag}" (page ${page})`);
             
-    //         this.triggerLoading();
-    //         let filteredData: Product[] = [];
+            // Get filtered results from getTagFilter
+            const allResults = await this.getTagFilter(tag);
+            console.log(`✅ Found ${allResults.length} filtered results for tag: ${tag}`);
+            
+            // Apply pagination
+            const pageSize = this.itemsPerPage || 6;
+            const totalItems = allResults.length;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const paginatedResults = allResults.slice(startIndex, endIndex);
+            
+            // Create result object
+            const filterResult = {
+                data: paginatedResults,
+                paginationInfo: {
+                    currentPage: page,
+                    itemsPerPage: pageSize,
+                    totalItems: totalItems,
+                    totalPages: totalPages,
+                    start: startIndex + 1,
+                    end: Math.min(endIndex, totalItems)
+                },
+                sortInfo: {
+                    sortField: this.sortField,
+                    sortOrder: this.sortOrder
+                },
+                isFilterResult: true,
+                filterTag: tag,
+                allFilterResults: allResults
+            };
 
-    //         // Handle special Published tag
-    //         if (tagText === 'Published') {
-    //             console.log('📊 Getting published products...');
-    //             filteredData = await this.getPublished();
-    //             console.log('✅ Published products loaded:', filteredData.length);
-    //         } 
-    //         // Handle other tags (category filtering)
-    //         else if (tagText !== 'All') {
-    //             // Get all products and filter by category
-    //             const allData = await this.getAllProducts();
-    //             filteredData = allData.filter((item: Product) => {
-    //                 const category = item.category || '';
-    //                 return category.toLowerCase().includes(tagText.toLowerCase());
-    //             });
-    //             console.log(`🏷️ Filtered by category "${tagText}":`, filteredData.length);
-    //         } 
-    //         // Handle "All" tag
-    //         else {
-    //             filteredData = await this.getAllProducts();
-    //             console.log('📦 All products loaded:', filteredData.length);
-    //         }
+            // Trigger success callback to render table
+            this.triggerSuccess(filterResult);
+            
+        } catch (error) {
+            console.error('❌ Error during tag filter:', error);
+            this.triggerError(error);
+        }
+    }
 
-    //         // Create result object similar to pagination result
-    //         const result = {
-    //             data: filteredData,
-    //             paginationInfo: {
-    //                 currentPage: 1,
-    //                 itemsPerPage: filteredData.length,
-    //                 totalItems: filteredData.length,
-    //                 totalPages: 1,
-    //                 start: 1,
-    //                 end: filteredData.length
-    //             },
-    //             sortInfo: {
-    //                 sortField: '',
-    //                 sortOrder: 'asc' as const
-    //             }
-    //         };
+    /**
+     * Override handleTagFilter from BaseController to use pagination
+     */
+    public async handleTagFilter(tagText: string): Promise<void> {
+        // Use the paginated version
+        await this.handleTagFilterWithPagination(tagText, 1);
+    }
 
-    //         this.triggerSuccess(result);
-
-    //     } catch (error) {
-    //         console.error('❌ Error filtering by tag:', error);
-    //         this.triggerError(error);
-    //     }
-    // }
 }
 
 
