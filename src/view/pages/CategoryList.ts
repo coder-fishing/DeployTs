@@ -13,7 +13,6 @@ export const CategoryList = async (): Promise<HTMLElement> => {
     breadcrumbConfig: BREADCRUMBS.CATEGORY_LIST,
     buttonConfig: BUTTON_GROUPS.LIST.CATEGORY,
     tableRenderer: CategoryTable,
-    // No tag filter for categories
     className: 'product-list',
     title: 'Category',
     pageSize: 3

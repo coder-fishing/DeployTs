@@ -30,6 +30,7 @@ export class BaseListPage<T> {
   private className: string;
   private title: string;
   private pageSize: number;
+  private currentSearchQuery: string = ''; // Track current search query
 
   constructor(config: BaseListPageConfig<T>) {
     this.controller = config.controller;
@@ -75,8 +76,26 @@ export class BaseListPage<T> {
           );
         }
         hideOverlayLoading();
-        // Update pagination
-        this.updatePaginationDisplay(result.paginationInfo);
+        
+        // Check if this is a search result
+        if (result.isSearchResult) {
+          // Track current search query
+          this.currentSearchQuery = result.searchQuery || '';
+          // Show search info and pagination
+          this.showSearchResults(result.data.length, result.searchQuery);
+          this.updatePaginationDisplay(result.paginationInfo);
+          console.log('Search pagination info:', result.paginationInfo);
+        } else {
+          // Clear search query
+          this.currentSearchQuery = '';
+          // Show pagination and hide search info
+          this.hideSearchResults();
+          this.showPagination();
+          if (result.paginationInfo) {
+            this.updatePaginationDisplay(result.paginationInfo);
+          }
+        }
+        
         // Setup sort event listeners
         this.setupSortEventListeners();
       }
@@ -85,7 +104,17 @@ export class BaseListPage<T> {
 
   // Function to update only the table and pagination
   private updateTableAndPagination = async (page: number): Promise<void> => {
-    await this.controller.loadDataForPageWithUI(page);
+    // Check if we're in search mode
+    if (this.currentSearchQuery) {
+      // Use search pagination
+      const productController = this.controller as any;
+      if (productController.searchProductsWithPagination) {
+        await productController.searchProductsWithPagination(this.currentSearchQuery, page);
+      }
+    } else {
+      // Use regular pagination
+      await this.controller.loadDataForPageWithUI(page);
+    }
   };
 
   // Function to update pagination display and add event listeners
@@ -139,14 +168,180 @@ export class BaseListPage<T> {
     });
   }
 
+  // Setup tag filter event listeners
+  private setupTagFilterListeners(): void {
+    if (!this.tagFilter) return;
+
+    const tagItems = document.querySelectorAll('.tag-add-searchbar__tag--item');
+    tagItems.forEach(item => {
+      item.addEventListener('click', async (e) => {
+        const tagElement = e.currentTarget as HTMLElement;
+        const tagText = tagElement.querySelector('.tag-add-searchbar__tag--item-element')?.textContent || '';
+        
+        console.log(`🏷️ Tag clicked: ${tagText}`);
+        
+        // Remove active class from all tags
+        tagItems.forEach(tag => tag.classList.remove('item-active'));
+        
+        // Add active class to clicked tag
+        tagElement.classList.add('item-active');
+        
+        // Handle different tag filters
+        await this.handleTagFilter(tagText);
+      });
+    });
+  }
+
+  // Handle tag filter logic
+  private async handleTagFilter(tagText: string): Promise<void> {
+    try {
+      console.log(`🔍 Filtering by tag: ${tagText}`);
+      
+      // Show loading
+      const tableContainer = document.querySelector('.product-table-container');
+      if (tableContainer) {
+        showOverlayLoading();
+      }
+
+      let filteredData: T[] = [];
+
+      // Handle special Published tag
+      if (tagText === 'Published') {
+        console.log('📊 Getting published products...');
+        
+        // Check if controller has getPublished method (for ProductController)
+        const controller = this.controller as any;
+        if (controller.getPublished && typeof controller.getPublished === 'function') {
+          filteredData = await controller.getPublished();
+          console.log('✅ Published products loaded:', filteredData.length);
+        } else {
+          console.warn('⚠️ getPublished method not found on controller');
+        }
+      } 
+      // Handle other tags (category filtering)
+      else if (tagText !== 'All') {
+        // Get all data and filter by category
+        const allData = await (this.controller as any).getAllProducts?.() || [];
+        filteredData = allData.filter((item: any) => {
+          const category = item.category || '';
+          return category.toLowerCase().includes(tagText.toLowerCase());
+        });
+        console.log(`🏷️ Filtered by category "${tagText}":`, filteredData.length);
+      } 
+      // Handle "All" tag
+      else {
+        filteredData = await (this.controller as any).getAllProducts?.() || [];
+        console.log('📦 All products loaded:', filteredData.length);
+      }
+
+      // Update table with filtered data
+      if (tableContainer) {
+        tableContainer.innerHTML = this.tableRenderer(filteredData, '', 'asc');
+        hideOverlayLoading();
+      }
+
+      // Update pagination for filtered data
+      // this.updatePaginationForFilteredData(filteredData);
+
+      // Setup sort listeners again
+      this.setupSortEventListeners();
+
+    } catch (error) {
+      console.error('❌ Error filtering by tag:', error);
+      hideOverlayLoading();
+      
+      const tableContainer = document.querySelector('.product-table-container');
+      if (tableContainer) {
+        tableContainer.innerHTML = `
+          <div class="error-message">
+            <h3>Error filtering data</h3>
+            <p>Unable to filter by "${tagText}". Please try again.</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+  // Update pagination for filtered data
+  private updatePaginationForFilteredData(filteredData: T[]): void {
+    const paginationContainer = document.querySelector('.pagination-container');
+    if (paginationContainer) {
+      // For simplicity, show all filtered data on one page
+      // Or implement client-side pagination
+      const totalItems = filteredData.length;
+      
+      // Clear existing pagination
+      paginationContainer.innerHTML = '';
+      
+      if (totalItems > 0) {
+        const paginationInfo = document.createElement('div');
+        paginationInfo.className = 'pagination-info';
+        paginationInfo.innerHTML = `
+          <span>Showing ${totalItems} filtered results</span>
+        `;
+        paginationContainer.appendChild(paginationInfo);
+      }
+    }
+  }
+
+  // Show search results info
+  private showSearchResults(resultCount: number, query?: string): void {
+    this.hideSearchResults();
+    // this.hidePagination();
+  }
+
+  // Hide search results info
+  private hideSearchResults(): void {
+    const searchInfo = document.querySelector('.search-results-info');
+    if (searchInfo) {
+      searchInfo.remove();
+    }
+  }
+
+  // Hide pagination
+  private hidePagination(): void {
+    const paginationContainer = document.querySelector('.pagination-container') as HTMLElement;
+    if (paginationContainer) {
+      paginationContainer.style.display = 'none';
+    }
+  }
+
+
+  // Show pagination
+  private showPagination(): void {
+    const paginationContainer = document.querySelector('.pagination-container') as HTMLElement;
+    if (paginationContainer) {
+      paginationContainer.style.display = 'block';
+    }
+  }
+
+  // Setup global clear search function
+  private setupGlobalClearSearch(): void {
+    (window as any).clearSearch = () => {
+      // Clear search input
+      const searchInput = document.querySelector('.search-bar input') as HTMLInputElement;
+      if (searchInput) {
+        searchInput.value = '';
+      }
+      
+      // Trigger search with empty query to reset
+      this.controller.handleSearch('');
+    };
+  }
+
   // Generate the HTML content
   private generateHTML(): string {
     const tagFilterHtml = this.tagFilter ? 
-      TagFilter(this.tagFilter.filters, this.tagFilter.currentFilter) : '';
+      TagFilter(
+        this.tagFilter.filters.map(filter => filter.name || filter),
+        this.tagFilter.currentFilter?.name || this.tagFilter.currentFilter
+      ) : '';
 
     const searchSection = this.tagFilter ? `
       <div class="tag-add-searchbar">
-        ${tagFilterHtml}
+        <div class="tag-filter-container">
+          ${tagFilterHtml}
+        </div>
         <div class="tag-add-searchbar__search">
           ${searchBar("Search").outerHTML}
         </div>
@@ -190,12 +385,18 @@ export class BaseListPage<T> {
     // Setup callbacks and global functions
     this.setupControllerCallbacks();
     this.setupGlobalRetry();
+    this.setupGlobalClearSearch();
+    this.setupGlobalClearSearch();
 
     // Set HTML content
     container.innerHTML = this.generateHTML();
 
     // Load initial data after DOM is ready
     setTimeout(() => {
+      // Setup tag filter listeners
+      this.setupTagFilterListeners();
+      
+      // Load initial data
       this.updateTableAndPagination(1);
     }, 0);
 

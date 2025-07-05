@@ -16,9 +16,10 @@ export function App() {
   // Render layout
   const layout = Layout();
   appElement.appendChild(layout);
-    // Setup navigation event listeners after DOM is fully rendered
+  // Setup navigation event listeners after DOM is fully rendered
   setTimeout(() => {
     setupNavigationListeners();
+
   }, 100);
   // Setup router
   router.addRoute({

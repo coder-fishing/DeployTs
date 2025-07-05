@@ -5,10 +5,12 @@ import { ProductTable } from '~/view/components/table/productTable';
 import ProductController from '~/controllers/ProductController';
 import { BaseListPage } from '~/view/components/BaseListPage';
 import type { Product } from '~/types/product.type';
+// import { TestSearchController } from '~/controllers/TestSearchController';
 
 const productController = ProductController.getInstance();
-
+// Remove immediate call - will be called after render
 let currentFilter = TAG_FILTERS.PRODUCT[0];
+
 
 export const ProducList = async (): Promise<HTMLElement> => {
   const baseListPage = new BaseListPage<Product>({
@@ -25,5 +27,12 @@ export const ProducList = async (): Promise<HTMLElement> => {
     pageSize: 6
   });
 
-  return await baseListPage.render();
+  const renderedPage = await baseListPage.render();
+  
+  // Setup search after DOM is rendered
+  setTimeout(() => {
+    productController.initializeSearch();
+  }, 0); 
+
+  return renderedPage;
 };

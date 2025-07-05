@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Interface for paginated response
 export interface PaginatedResponse<T> {
+  items: import("d:/practice-ts/src/types/product.type").Product[];
   data: T[];
   totalItems: number;
   currentPage: number;
@@ -78,13 +79,11 @@ export default class BaseService {
       console.log(`Fetching paginated data from: ${this.baseUrl}${url}`);
       const paginatedData = await this.get<T[]>(url);
       
-      // MockAPI doesn't return pagination metadata, so we need to calculate it
-      // Make a request to get total count (this is a limitation of MockAPI)
       const allData = await this.getAll<T>();
       const totalItems = allData.length;
       const totalPages = Math.ceil(totalItems / limit);
-      
       return {
+        items: paginatedData as any, // Adjust type as needed
         data: paginatedData,
         totalItems,
         currentPage: page,
@@ -94,6 +93,35 @@ export default class BaseService {
       };
     } catch (error) {
       console.error('Error fetching paginated data:', error);
+      throw error;
+    }
+  }
+
+  /** 
+   * Search method
+   **/
+
+  async search<T>(query:string, page: number, limit: number , sort?: string, order?:string): Promise<PaginatedResponse<T>> {
+    try {
+      const url = `?search=${encodeURIComponent(query)}`;
+      console.log(`Searching data with query: ${query}`);
+      const paginatedData = await this.get<T[]>(url);
+      
+      const allData = await this.getAll<T>();
+      const totalItems = allData.length;
+      const totalPages = Math.ceil(totalItems / limit);
+      return {
+        items: paginatedData as any, // Adjust type as needed
+        data: paginatedData,
+        totalItems,
+        currentPage: page,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      };
+    }
+    catch (error) {
+      console.error('Error searching data:', error);
       throw error;
     }
   }

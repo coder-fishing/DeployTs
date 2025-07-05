@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from "~/services/BaseService";
+import type { PaginatedResponse } from "../services/BaseService";
 
 export abstract class BaseController<T> {
     // Pagination state
@@ -269,5 +269,17 @@ export abstract class BaseController<T> {
     public async sortAndReload(field: string): Promise<void> {
         this.toggleSort(field);
         await this.loadDataForPageWithUI(this.currentPage);
+    }
+
+    /**
+     * Handle tag filter - to be implemented by subclasses
+     */
+    public async handleTagFilter(tagText: string): Promise<void> {
+        // Default implementation - subclasses should override
+        console.warn('handleTagFilter not implemented in subclass');
+        
+        // Load all data as fallback
+        const result = await this.loadDataForPage(1);
+        this.triggerSuccess(result);
     }
 }
