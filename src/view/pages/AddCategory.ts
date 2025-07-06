@@ -3,8 +3,17 @@ import { BUTTON_GROUPS } from '~/constant';
 import { groupButton } from '~/view/components/groupButton';
 import { BREADCRUMBS } from '~/constant';
 import { categoryForm } from '~/view/components/form/categoryForm';
+import { CategoryController } from '../../controllers/CategoryController';
+
+const categoryController = CategoryController.getInstance();
 
 export const AddCategory = (): string => {
+    // Setup image handling after DOM is ready
+    setTimeout(() => {
+        categoryController.initializeImageHandling();
+        categoryController.handleAddCategory()
+    }, 100);
+
     return `
     <div class="product-list">
         <div class="product-title">
@@ -15,7 +24,7 @@ export const AddCategory = (): string => {
                     BREADCRUMBS.PRODUCT_LIST.icon
                 )}
             </div>   
-                ${groupButton(BUTTON_GROUPS.FORM)} 
+                ${groupButton(BUTTON_GROUPS.FORM.CATEGORY)} 
         </div>
         ${categoryForm({
             categoryData: {} as any,

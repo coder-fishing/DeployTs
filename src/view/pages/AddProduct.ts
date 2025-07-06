@@ -15,7 +15,7 @@ export const AddProduct = (): string => {
                         BREADCRUMBS.PRODUCT_LIST.icon
                     )}
                 </div>   
-                    ${groupButton(BUTTON_GROUPS.FORM)} 
+                    ${groupButton(BUTTON_GROUPS.FORM.PRODUCT)} 
             </div>
             ${productForm({
                 productData: {} as any,

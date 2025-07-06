@@ -90,19 +90,36 @@ export const BUTTON_GROUPS = {
         ]
     }     
     ,
-    FORM: [
-        {
+    FORM: {
+        CATEGORY:[
+            {
             text: 'Cancel',
             icon: cross,
             className: 'product-title__buttons--cancel'
-        },
-        {
+            },
+
+            {
             text: 'Save',
             icon: save,
             className: 'product-title__buttons--add',
-            id: 'saveBtn'
-        }
-    ]
+            id: 'saveCategoryBtn'
+            }
+        ],
+
+        PRODUCT: [
+            {
+                text: 'Cancel',
+                icon: cross,
+                className: 'product-title__buttons--cancel'
+            },
+            {
+                text: 'Save',
+                icon: save,
+                className: 'product-title__buttons--add',
+                id: 'saveProductBtn'
+            }
+        ]
+    }
 };
 
 export const TAG_FILTERS = {
