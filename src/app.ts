@@ -5,6 +5,8 @@ import { CategoryList } from './view/pages/CategoryList.js';
 import { setupNavigationListeners } from './view/layout/navigation.js';
 import { AddCategory } from './view/pages/AddCategory.js';
 import { AddProduct } from './view/pages/AddProduct.js';
+import { EditCategory } from './view/pages/EditCategory.js';
+import CategoryController from './controllers/CategoryController';
 
 export function App() {
   const appElement = document.querySelector<HTMLDivElement>('#app');
@@ -13,6 +15,7 @@ export function App() {
   // Clear old content
   appElement.innerHTML = '';
   appElement.className = 'app';
+
   // Render layout
   const layout = Layout();
   appElement.appendChild(layout);
@@ -24,35 +27,46 @@ export function App() {
   // Setup router
   router.addRoute({
     path: '/',
-    component: ProducList,
+    component: () => ProducList(),
     title: 'Trang chủ - TypeScript App',
   });
   router.addRoute({
     path: "/product",
-    component: ProducList,
+    component: () => ProducList(),
     title: "Về chúng tôi - TypeScript App",
   });
 
   router.addRoute({
     path: '/category',
-    component: CategoryList,
+    component: () => CategoryList(),
     title: 'Danh sách danh mục - TypeScript App'
   });
 
   router.addRoute({
     path: '/addcategory',
-    component: AddCategory,
+    component: () => AddCategory(),
     title: 'Thêm danh mục - TypeScript App'
   });
 
   router.addRoute({
     path: '/addproduct',
-    component: AddProduct,
+    component: () => AddProduct(),
     title: 'Thêm sản phẩm - TypeScript App'
+  });
+
+  router.addRoute({
+    path: '/editcategory/:id',
+    component: (params) => EditCategory(params),
+    title: 'Chỉnh sửa danh mục - TypeScript App'
   });
 
   // Initialize router
   router.init();
+
+  // Initialize controllers
+  const categoryController = CategoryController.getInstance();
+  categoryController.initializeController();
+  console.log('✅ CategoryController initialized');
 
   return { router };
 }

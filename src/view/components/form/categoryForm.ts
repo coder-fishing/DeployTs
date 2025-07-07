@@ -3,8 +3,10 @@ import { InputField } from "./InputField";
 import { picture } from "~/assets/icon";
 
 export const categoryForm = ({ categoryData, mode}: categoryFormProps): string => {
+    const categoryId = categoryData?.categoryID || '';
+    
     return `
-        <div class="category-form">
+        <div class="category-form" ${categoryId ? `data-category-id="${categoryId}"` : ''}>
             <div class="thumbnail">
                 <h3 class="thumbnail__title">Thumbnail</h3>
                 <p class="thumbnail__subtitle">Photo</p> 

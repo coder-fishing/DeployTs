@@ -28,7 +28,7 @@ export default class BaseService {
 
   protected async post<T>(url: string, data: any): Promise<T> {
     const response = await axios.post<T>(`${this.baseUrl}${url}`, data);
-    if (response.status !== 200) {
+    if (response.status !== 200 && response.status !== 201) {
       throw new Error(`Error posting data to ${url}: ${response.statusText}`);
     }
     return response.data;
@@ -36,7 +36,7 @@ export default class BaseService {
 
   protected async put<T>(url: string, data: any): Promise<T> {
     const response = await axios.put<T>(`${this.baseUrl}${url}`, data);
-    if (response.status !== 200) {
+    if (response.status !== 200 && response.status !== 204) {
       throw new Error(`Error putting data to ${url}: ${response.statusText}`);
     }
     return response.data;

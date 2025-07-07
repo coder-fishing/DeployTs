@@ -94,6 +94,11 @@
         align-items: center;
         border-bottom: 1px solid $neutralGray50;
 
+        &--action{
+            display: flex;
+            gap: 0.5rem;
+        }
+
         &--sku{
             font-weight: 600;
             color: $primary500;

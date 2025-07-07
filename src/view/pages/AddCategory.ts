@@ -8,17 +8,18 @@ import { CategoryController } from '../../controllers/CategoryController';
 const categoryController = CategoryController.getInstance();
 
 export const AddCategory = (): string => {
-    // Setup image handling after DOM is ready
+    // Setup image handling và button event listeners after DOM is ready
     setTimeout(() => {
+        console.log('🚀 Setting up Add Category page...');
         categoryController.initializeImageHandling();
-        categoryController.handleAddCategory()
+        categoryController.setupSaveCategoryButton();
     }, 100);
 
     return `
     <div class="product-list">
         <div class="product-title">
             <div class="product-title-left">
-                <p class="product-title-left__name">Category</p>
+                <p class="product-title-left__name">Add Category</p>
                 ${breadCrumbs(
                     BREADCRUMBS.ADD_CATEGORY.items,
                     BREADCRUMBS.PRODUCT_LIST.icon

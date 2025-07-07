@@ -8,7 +8,7 @@ function renderCell(content: string, className = ""): string {
 
 export const CategoryRow = ({ category }: { category: Category }): string => {
   return `
-        <tr class="product-table__row" data-id="${category.id}">
+        <tr class="product-table__row" data-id="${category.categoryID}">
              ${renderCell(
                `
         <div class="product-table__name">
@@ -53,9 +53,11 @@ export const CategoryRow = ({ category }: { category: Category }): string => {
                 )}
                 ${renderCell(
                   `<div class="product-table__item--action">
+                    <div class="product-table__item--action--edit" data-id="${category.categoryID}">
+                      <img src="${pencil}" alt="edit" class="edit-icon" />
+                    </div>
                     <img src="${eye}" alt="view" class="product-table__item--action--view"/>
-                    <img src="${pencil}" alt="edit" class="product-table__item--action--edit"/>
-                    <img src="${trash}" alt="delete" class="product-table__item--action--delete"/>
+                    <img src="${trash}" alt="delete" class="product-table__item--action--delete" data-id="${category.categoryID}"/>
                 </div>`,
                   "product-table__item"
                 )}
