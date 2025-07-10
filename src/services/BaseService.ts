@@ -1,8 +1,9 @@
 import axios from 'axios';
+import type { Product } from "../types/product.type";
 
 // Interface for paginated response
 export interface PaginatedResponse<T> {
-  items: import("d:/practice-ts/src/types/product.type").Product[];
+  items: Product[];
   data: T[];
   totalItems: number;
   currentPage: number;
