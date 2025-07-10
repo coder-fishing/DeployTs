@@ -14,7 +14,7 @@ import {
 const nav = navigationController.getInstance();
 
 const submenuItes = MENUITEMS.map(item => subMenu(item.name, item.notification, item.link));
-console.log(submenuItes);
+
 const totalNotifications = getTotalNotifications();
 const navigation = (): HTMLElement => {
     const nav = document.createElement('nav');

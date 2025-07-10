@@ -25,7 +25,7 @@ export class FilteredPagination {
         const totalItems = filteredData.length;
         const totalPages = Math.ceil(totalItems / this.pageSize);
         
-        console.log(`📊 Setting up pagination: ${totalItems} items, ${totalPages} pages`);
+        
         
         // Update table with first page
         this.updateTableForPage(1);
@@ -42,7 +42,7 @@ export class FilteredPagination {
         const endIndex = Math.min(startIndex + this.pageSize, this.filteredData.length);
         const pageData = this.filteredData.slice(startIndex, endIndex);
         
-        console.log(`📄 Loading page ${page}: items ${startIndex + 1}-${endIndex}`);
+        
         
         const tableContainer = document.querySelector('.product-table-container');
         if (tableContainer) {
@@ -63,7 +63,7 @@ export class FilteredPagination {
         paginationContainer.innerHTML = '';
         
      
-            console.log(`🔢 Creating pagination with ${totalPages} pages`);
+            
             
             // Create pagination component
             const paginationElement = Pagination({
@@ -73,7 +73,7 @@ export class FilteredPagination {
                 totalPages: totalPages,
                 caretLeft,
                 onPageChange: (page: number) => {
-                    console.log(`🔄 Page change requested: ${page}`);
+                    
                     this.handlePageChange(page);
                 }
             });
@@ -86,7 +86,7 @@ export class FilteredPagination {
      * Handle page change
      */
     private handlePageChange(page: number): void {
-        console.log(`📄 Changing to page ${page}...`);
+        
         
         // Show loading
         const tableContainer = document.querySelector('.product-table-container') as HTMLElement;
@@ -109,7 +109,7 @@ export class FilteredPagination {
                 tableContainer.style.opacity = '1';
             }
             
-            console.log(`✅ Page ${page} loaded successfully`);
+            
         }, 300);
     }
 
@@ -130,7 +130,7 @@ export class FilteredPagination {
  * Quick test function
  */
 export function testEnhancedPagination() {
-    console.log('🧪 Testing Enhanced Pagination...');
+    
     
     // Mock data with more than 6 items to test pagination
     const mockData = Array.from({ length: 15 }, (_, i) => ({
@@ -163,6 +163,6 @@ export function testEnhancedPagination() {
     // Setup with mock data
     pagination.setupPagination(mockData);
     
-    console.log('✅ Enhanced pagination test completed');
-    console.log('📊 Current page info:', pagination.getCurrentPageInfo());
+    
+    
 }

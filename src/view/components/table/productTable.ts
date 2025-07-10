@@ -7,7 +7,7 @@ export function ProductTable(
   sortField: string = '', 
   sortOrder: 'asc' | 'desc' = 'asc'
 ): string {
-    console.log('Rendering Product Table with products:', products);
+    
   return `
         <table class="product-table">
             ${ProductTableHeader(sortField, sortOrder)}

@@ -1,14 +1,14 @@
 export type Category = {
   id?: string;
   stock: number;
-  sold: number;
+  sold?: number;
   createdAt?: string;
   create_at?: number; // Legacy support
   name: string;
   description: string;
   image?: string;
   avatar?: string; // Alternative image field
-  categoryId?: string;
+  categoryID?: string;
   status?: string;
 };
     

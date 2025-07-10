@@ -18,7 +18,7 @@ export class NavigationController {
    * Sets up all event listeners for navigation items
    */
   public setupNavigationListeners(): void {
-    console.log("Setting up navigation listeners");
+    
     
     // Use setTimeout to ensure DOM is fully rendered
     setTimeout(() => {
@@ -69,7 +69,7 @@ export class NavigationController {
       const isActive = ecommerceMenu.classList.toggle("active");
       
       subMenuContainer.style.display = isActive ? "block" : "none";
-      console.log("Toggled submenu:", isActive ? "shown" : "hidden");
+      
       
       // Reset icon states
       this.updateIconStates(ecommerceMenu, icon, iconnormal, mainIcon, isActive);
@@ -134,7 +134,7 @@ export class NavigationController {
           this.updateIconStates(ecommerceMenu, hoverIcon, normalIcon, mainIcon, false);
         }
         
-        console.log("Clicked outside - closed submenu and reset icons");
+        
       }
     });
   }

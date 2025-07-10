@@ -1,4 +1,5 @@
 import { Dropdown } from "./dropdown";
+import { StatusBadge } from "./StatusBadge";
 
 export interface StatusDropdownProps {
   value: string;
@@ -6,10 +7,7 @@ export interface StatusDropdownProps {
 }
 
 // Simple status badge component
-const StatusBadge = ({ status, className = "" }: { status: string; className?: string }): string => {
-  const statusClass = status.toLowerCase().replace(/\s+/g, '-');
-  return `<span class="status-badge status-badge--${statusClass} ${className}">${status}</span>`;
-};
+
 
 export const StatusDropdown = ({ value, className }: StatusDropdownProps): string => {
   const status = value || 'Draft';
@@ -26,6 +24,8 @@ export const StatusDropdown = ({ value, className }: StatusDropdownProps): strin
       ${Dropdown({
         id: "dropdown",
         value: status,
+        btn: "Button",
+        cont: "Content",
         options: [
           { value: "Draft", label: "Draft" },
           { value: "Published", label: "Published" },

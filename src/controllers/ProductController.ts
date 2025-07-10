@@ -1,14 +1,51 @@
 import ProductService from '../services/ProductService';
 import { BaseController } from './BaseController';
 import type { Product } from '../types/product.type';
+import ProductUIHandler from '../UIHandler/ProductUIHandler';
+import uploadToCloudinary from '~/utils/uploadToCloudinary';
+import { hideOverlayLoading, showOverlayLoading } from '~/view/components/loading';
+import { router } from '~/router/Router';
+import { createToast } from '~/utils/toast';
+import { SearchHandler } from '../handlers/SearchHandler';
+import { TableInteractionHandler } from '../handlers/TableInteractionHandler';
+import { FilterHandler } from '../handlers/FilterHandler';
+import { ValidationService } from '../utils/ValidationProductForm';
 
 export class ProductController extends BaseController<Product> {
     private static instance: ProductController;
     private productService: ProductService;
+    uiHandler: ProductUIHandler;
+    private searchHandler: SearchHandler;
+    private tableHandler: TableInteractionHandler;
+    private filterHandler: FilterHandler;
 
     constructor() {
         super();
         this.productService = new ProductService();
+        this.uiHandler = new ProductUIHandler();
+        
+        // Initialize handlers
+        this.searchHandler = new SearchHandler(
+            this.searchProducts.bind(this),
+            this.triggerSuccess.bind(this),
+            this.triggerError.bind(this),
+            this.itemsPerPage
+        );
+        
+        this.tableHandler = new TableInteractionHandler(
+            router,
+            this.deleteProduct.bind(this),
+            'product'
+        );
+        
+        this.filterHandler = new FilterHandler(
+            this.getTagFilter.bind(this),
+            this.triggerSuccess.bind(this),
+            this.triggerError.bind(this),
+            this.itemsPerPage,
+            this.sortField,
+            this.sortOrder
+        );
     }
 
     public static getInstance(): ProductController {
@@ -29,47 +66,21 @@ export class ProductController extends BaseController<Product> {
      * Get all products
      */
     public async getAllProducts() {
-        try {
-            const products = await this.productService.getAllProducts();
-            console.log('Fetched products:', products);
-            return products;
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            throw error;
-        }
+        return this.productService.getAllProducts();
     }
 
     // src/controllers/ProductController.ts
     public async getTagFilter(tag: string): Promise<Product[]> {
-        try {
-            const products = await this.productService.getAllProducts();
-            
-            let publishedProducts: Product[] = [];
-            
-            if (tag === 'Published') {
-                publishedProducts = products.filter(product => {
-                    return product.status?.toLowerCase() === 'published';
-                });
-            } else if (tag === 'Draft') {
-                publishedProducts = products.filter(product => {
-                    return product.status?.toLowerCase() === 'draft';
-                });
-            } else if (tag === 'Low Stock') {
-                publishedProducts = products.filter(product => {
-                    return product.status?.toLowerCase() === 'low stock';
-                });   
-            } else  {
-                publishedProducts = products;
-            }
-
-            console.log('✅ Fetched published products:', publishedProducts.length);
-            console.table(publishedProducts)
-            return publishedProducts;
-            
-        } catch (error) {
-            console.error('❌ Error fetching published products:', error);
-            throw error;
+        const products = await this.productService.getAllProducts();
+        
+        if (tag === 'Published') {
+            return products.filter(product => product.status?.toLowerCase() === 'published');
+        } else if (tag === 'Draft') {
+            return products.filter(product => product.status?.toLowerCase() === 'draft');
+        } else if (tag === 'Low Stock') {
+            return products.filter(product => product.status?.toLowerCase() === 'low stock');
         }
+        return products;
     }
 
     /**
@@ -87,318 +98,287 @@ export class ProductController extends BaseController<Product> {
      * Get product by ID
      */
     public async getProductById(id: number) {
-        try {
-            const product = await this.productService.getProductById(id);
-            return product;
-        } catch (error) {
-            console.error('Error fetching product:', error);
-            throw error;
-        }
+        return this.productService.getProductById(id);
     }
 
     /**
      * Create new product
      */
     public async createProduct(productData: any) {
-        try {
-            const product = await this.productService.createProduct(productData);
-            return product;
-        } catch (error) {
-            console.error('Error creating product:', error);
-            throw error;
-        }
+        return this.productService.createProduct(productData);
     }
 
     /**
-     * Update product
+     * Update an existing product
      */
-    public async updateProduct(id: number, productData: any) {
-        try {
-            const product = await this.productService.updateProduct(id, productData);
-            return product;
-        } catch (error) {
-            console.error('Error updating product:', error);
-            throw error;
-        }
+    public async updateProduct(id: number, productData: Product): Promise<Product> {
+        return this.productService.updateProduct(id, productData);
     }
 
     /**
-     * Delete product
+     * Delete a product
      */
-    public async deleteProduct(id: number) {
-        try {
-            await this.productService.deleteProduct(id);
-            return true;
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            throw error;
-        }
+    public async deleteProduct(id: number): Promise<void> {
+        return this.productService.deleteProduct(id);
     }
 
     /**
-     * Search products by query and trigger success callback to render results
-    **/
+     * Search products by query
+     */
     public async searchProducts(query: string, page: number, limit: number): Promise<Product[]> {
         return this.productService.searchProducts(query, page, limit);
     }
 
     /**
-     * Search products with pagination support
+     * Initialize search functionality
      */
-    public async searchProductsWithPagination(query: string, page: number = 1): Promise<void> {
-        try {
-            console.log(`🔍 Searching for: "${query}" (page ${page})`);
-            
-            // Get all search results first
-            const allResults = await this.searchProducts(query, 1, 1000);
-            console.log(`✅ Found ${allResults.length} total search results`);
-            
-            // Apply pagination
-            const pageSize = this.itemsPerPage || 6;
-            const totalItems = allResults.length;
-            const totalPages = Math.ceil(totalItems / pageSize);
-            const startIndex = (page - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            const paginatedResults = allResults.slice(startIndex, endIndex);
-            
-            // Create result object
-            const searchResult = {
-                data: paginatedResults,
-                paginationInfo: {
-                    currentPage: page,
-                    itemsPerPage: pageSize,
-                    totalItems: totalItems,
-                    totalPages: totalPages,
-                    start: startIndex + 1,
-                    end: Math.min(endIndex, totalItems)
-                },
-                sortInfo: {
-                    sortField: this.sortField,
-                    sortOrder: this.sortOrder
-                },
-                isSearchResult: true,
-                searchQuery: query,
-                allSearchResults: allResults
-            };
-
-            this.triggerSuccess(searchResult);
-            
-        } catch (error) {
-            console.error('❌ Error during paginated search:', error);
-            this.triggerError(error);
-        }
+    public initializeSearch(): void {
+        this.searchHandler.initialize();
     }
 
     /**
-     * Enhanced search handler for multiple search components with debounce
+     * Search with pagination
      */
-    public handleSearch(): void {
-        // Multiple selectors to find all search inputs on the page
-        const searchSelectors = [
-            '.search-input',
-            '.search-bar_input', 
-            '.search-bar-input',
-            'input[placeholder*="Search"]',
-            'input[placeholder*="search"]',
-            'input[type="search"]',
-            '[data-search="true"]'
-        ];
+    public async searchProductsWithPagination(query: string, page: number = 1): Promise<void> {
+        return this.searchHandler.searchWithPagination(query, page);
+    }
+
+    /**
+     * Setup table event listeners
+     */
+    public setupTableEventListeners(): void {
+        this.tableHandler.setupTableInteractions();
+    }
+
+    /**
+     * Handle tag filter
+     */
+    public async handleTagFilter(): Promise<void> {
+        // This method signature must match the base class
+        // For tag-specific filtering, use handleTagFilterWithPagination instead
+    }
+
+    /**
+     * Handle tag filter with specific tag text
+     */
+    public async handleTagFilterByText(tagText: string): Promise<void> {
+        return this.filterHandler.handleTagFilter(tagText);
+    }
+
+    /**
+     * Handle tag filter with pagination
+     */
+    public async handleTagFilterWithPagination(tag: string, page: number = 1): Promise<void> {
+        return this.filterHandler.handleTagFilterWithPagination(tag, page);
+    }
+
+    /**
+     * Initialize multiple images handling for product form
+     */
+    initializeMultipleImagesHandling(): void {
+        const isEditMode = !!(window as any).currentProductData;
+        if (isEditMode) return;
         
-        let foundInputs = 0;
-        const debounceDelay = 300;
-        let searchTimeout: number | null = null;
+        this.uiHandler.cleanup();
         
-        // Try each selector to find all search inputs
-        searchSelectors.forEach(selector => {
-            const searchInputs = document.querySelectorAll<HTMLInputElement>(selector);
-            
-            if (searchInputs.length > 0) {
-                console.log(`🔍 Found ${searchInputs.length} search input(s) with selector: ${selector}`);
-                foundInputs += searchInputs.length;
-                
-                // Add event listeners to all found inputs
-                searchInputs.forEach((searchInput, index) => {
-                    console.log(`✅ Setting up search listener for input ${index + 1}:`, {
-                        class: searchInput.className,
-                        placeholder: searchInput.placeholder,
-                        id: searchInput.id
-                    });
-                    
-                    // Add debounced search listener
-                    searchInput.addEventListener('input', async (event) => {
-                        const query = (event.target as HTMLInputElement).value.trim();
-                        
-                        // Clear previous timeout
-                        if (searchTimeout) {
-                            clearTimeout(searchTimeout);
-                        }
-                        
-                        // Set new timeout for debounced search
-                        searchTimeout = window.setTimeout(async () => {
-                            if (query.length >= 2) {
-                                try {
-                                    console.log(`🔍 Searching for: "${query}"`);
-                                    // Get all search results first
-                                    const allResults = await this.searchProducts(query, 1, 1000); // Get large number to get all results
-                                    console.log(`✅ Search completed: found ${allResults.length} products`);
-                                    
-                                    // Apply pagination to search results
-                                    const pageSize = this.itemsPerPage || 6;
-                                    const totalItems = allResults.length;
-                                    const totalPages = Math.ceil(totalItems / pageSize);
-                                    const paginatedResults = allResults.slice(0, pageSize); // Show only first page
-                                    
-                                    // Trigger success callback to update table with search results
-                                    const searchResult = {
-                                        data: paginatedResults, // Show only first 6 items
-                                        paginationInfo: {
-                                            currentPage: 1,
-                                            itemsPerPage: pageSize,
-                                            totalItems: totalItems,
-                                            totalPages: totalPages,
-                                            start: 1,
-                                            end: Math.min(pageSize, totalItems)
-                                        },
-                                        sortInfo: {
-                                            sortField: '',
-                                            sortOrder: 'asc' as const
-                                        },
-                                        isSearchResult: true,
-                                        searchQuery: query,
-                                        allSearchResults: allResults // Store all results for pagination
-                                    };
-                                    
-                                    this.triggerSuccess(searchResult);
-                                    
-                                } catch (error) {
-                                    console.error('❌ Error during search:', error);
-                                    this.triggerError(error);
-                                }
-                            } else if (query.length === 0) {
-                                console.log('🧹 Search cleared');
-                                
-                                // Reload original data when search is cleared
-                                this.loadDataForPageWithUI(1);
-                            }
-                        }, debounceDelay);
-                    });
-                    
-                    // Add focus event for debugging
-                    searchInput.addEventListener('focus', () => {
-                        console.log(`🎯 Search input ${index + 1} focused`);
-                    });
-                });
+        setTimeout(() => {
+            const elements = {
+                emptyState: document.getElementById('emptyState'),
+                previewState: document.getElementById('filledState'),
+                imageInput: document.getElementById('imageInputEmpty') || document.getElementById('imageInputFilled'),
+                previewContainer: document.getElementById('previewContainer'),
+                uploadArea: document.querySelector('.media__upload-area')
+            };
+
+            if (elements.emptyState && elements.previewState && elements.imageInput && elements.previewContainer) {
+                this.uiHandler.setupMultipleImagesHandling(elements);
             }
-        });
+        }, 100);
     }
     
     /**
-     * Initialize search with automatic setup and retry
+     * Get all uploaded image files
      */
-    public initializeSearch(): void {
-        console.log('🚀 Initializing search functionality...');
+    getUploadedImages(): File[] {
+        return this.uiHandler.getImageFiles();
+    }
+    
+    /**
+     * SetUp event listeners for product button and form elements
+     */
+    setupProductForm(): void {
+        const isEditMode = !!(window as any).currentProductData;
         
-        // Setup search immediately
-        this.handleSearch();
-        
-        // Setup again after DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('📄 DOM loaded, setting up search again...');
-                setTimeout(() => this.handleSearch(), 100);
-            });
+        if (isEditMode) {
+            const productData = (window as any).currentProductData;
+            if (productData?.ImageSrc) {
+                this.uiHandler.initializeEditModeImages(productData.ImageSrc);
+            }
+        } else {
+            this.initializeMultipleImagesHandling();
         }
         
-        // Watch for new search inputs being added dynamically
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'childList') {
-                    const addedNodes = Array.from(mutation.addedNodes);
-                    const hasSearchInputs = addedNodes.some(node => {
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            const element = node as Element;
-                            return element.matches('input') || 
-                                   element.querySelector('input') ||
-                                   element.matches('.search-input') ||
-                                   element.querySelector('.search-input');
-                        }
-                        return false;
-                    });
-                    
-                    if (hasSearchInputs) {
-                        console.log('🔄 New search inputs detected, setting up handlers...');
-                        setTimeout(() => this.handleSearch(), 500);
-                    }
+        const saveButton = document.querySelector('#saveProductBtn') as HTMLButtonElement;
+        if (saveButton) {
+            saveButton.addEventListener('click', async () => {
+                await this.handleSaveProduct()
+            });
+        }
+    }
+    
+
+    async handleSaveProduct(): Promise<void> {
+        const isEditMode = (window as any).currentProductData;
+        const productId = isEditMode ? (window as any).currentProductData.id : null;
+        
+        // Get form field values
+        const nameInput = document.querySelector('input[name="productName"]') as HTMLInputElement;
+        const descriptionInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+        const stockInput = document.querySelector('input[name="quantity"]') as HTMLInputElement;
+        const priceInput = document.querySelector('input[name="price"]') as HTMLInputElement;
+        const skuInput = document.querySelector('input[name="sku"]') as HTMLInputElement;
+        const barcodeInput = document.querySelector('input[name="barcode"]') as HTMLInputElement;
+        const discountTypeSelect = document.querySelector('select[name="discountType"]') as HTMLSelectElement;
+        const discountValueInput = document.querySelector('input[name="discountValue"]') as HTMLInputElement;
+        const taxClassSelect = document.querySelector('select[name="tax_class"]') as HTMLSelectElement;
+        const vatAmountInput = document.querySelector('input[name="vatAmount"]') as HTMLInputElement;
+        const categoryDropdown = document.getElementById('dropdownButtonTop') as HTMLDivElement;
+        const statusText = document.getElementById('status-text') as HTMLDivElement;
+        
+        // Simple validation - check required fields
+        if (!nameInput?.value.trim()) {
+            createToast('Product Name is required', 'error');
+            nameInput?.focus();
+            return; 
+        }
+        
+        if (!priceInput?.value.trim()) {
+            createToast('Price is required', 'error');
+            priceInput?.focus();
+            return; 
+        }
+        
+        if (!skuInput?.value.trim()) {
+            createToast('SKU is required', 'error');
+            skuInput?.focus();
+            return; 
+        }
+        
+        if (!stockInput?.value.trim()) {
+            createToast('Stock is required', 'error');
+            stockInput?.focus();
+            return; 
+        }
+        
+        // Image validation
+        let imageValidation;
+        if (isEditMode) {
+            const existingImages = (window as any).currentProductData.ImageSrc || {};
+            const removedIndices = this.uiHandler.getRemovedImageIndices();
+            const newImageFiles = this.getUploadedImages();
+            
+            imageValidation = ValidationService.validateProductImagesEditMode(existingImages, removedIndices, newImageFiles);
+        } else {
+            const newImageFiles = this.getUploadedImages();
+            imageValidation = ValidationService.validateProductImagesAddMode(newImageFiles);
+        }
+        
+        if (!imageValidation.valid) {
+            createToast(imageValidation.message || 'Please add at least one product image', 'error');
+            return;
+        }
+        
+        // Collect product data
+        const productData: Partial<Product> = {
+            name: nameInput.value.trim(),
+            description: descriptionInput?.value?.trim() || '',
+            stock: parseInt(stockInput.value || '0'),
+            price: parseFloat(priceInput.value || '0'),
+            sku: skuInput.value.trim(),
+            barcode: barcodeInput?.value?.trim() || '',
+            discountType: discountTypeSelect?.value || '',
+            discount_value: parseFloat(discountValueInput?.value || '0'),
+            taxClass: taxClassSelect?.value || '',
+            vat_amount: parseFloat(vatAmountInput?.value || '0'),
+            categoryID: categoryDropdown?.getAttribute('data-selected-id') || '',
+            category: categoryDropdown?.textContent?.trim() || '',
+            status: statusText?.textContent?.trim() || 'Draft',
+            quantity: parseInt(stockInput.value || '0'),
+            added: isEditMode ? (window as any).currentProductData.added : new Date().toISOString(),
+        };
+        
+        // Handle images
+        if (isEditMode) {
+            const existingImages = (window as any).currentProductData.ImageSrc || {};
+            const removedIndices = this.uiHandler.getRemovedImageIndices();
+            const newImageFiles = this.getUploadedImages();
+            
+            const finalImages = {
+                firstImg: existingImages.firstImg || '',
+                secondImg: existingImages.secondImg || '',
+                thirdImg: existingImages.thirdImg || ''
+            };
+            
+            // Remove marked images
+            removedIndices.forEach(slotName => {
+                if (finalImages[slotName as keyof typeof finalImages] !== undefined) {
+                    finalImages[slotName as keyof typeof finalImages] = '';
                 }
             });
-        });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-        
-        console.log('✅ Search initialization completed with MutationObserver');
-    }
+            
+            // Upload new images
+            if (newImageFiles.length > 0) {
+                const uploadedUrls: string[] = [];
+                
+                for (const file of newImageFiles) {
+                    const url = await uploadToCloudinary(file);
+                    uploadedUrls.push(url);
+                }
+                
+                // Fill empty slots
+                const imageSlots = ['firstImg', 'secondImg', 'thirdImg'] as const;
+                let uploadIndex = 0;
+                
+                for (const slot of imageSlots) {
+                    if (!finalImages[slot] && uploadIndex < uploadedUrls.length) {
+                        finalImages[slot] = uploadedUrls[uploadIndex];
+                        uploadIndex++;
+                    }
+                }
+            }
+            
+            productData.ImageSrc = finalImages;
+        } else {
+            const imageFiles = this.getUploadedImages();
+            const imageUrls: string[] = [];
 
-    /**
-     * Handle tag filter with pagination support
-     */
-    public async handleTagFilterWithPagination(tag: string, page: number = 1): Promise<void> {
-        try {
-            console.log(`🏷️ Filtering by tag: "${tag}" (page ${page})`);
+            for (const file of imageFiles) {
+                const url = await uploadToCloudinary(file);
+                imageUrls.push(url);
+            }
             
-            // Get filtered results from getTagFilter
-            const allResults = await this.getTagFilter(tag);
-            console.log(`✅ Found ${allResults.length} filtered results for tag: ${tag}`);
-            
-            // Apply pagination
-            const pageSize = this.itemsPerPage || 6;
-            const totalItems = allResults.length;
-            const totalPages = Math.ceil(totalItems / pageSize);
-            const startIndex = (page - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            const paginatedResults = allResults.slice(startIndex, endIndex);
-            
-            // Create result object
-            const filterResult = {
-                data: paginatedResults,
-                paginationInfo: {
-                    currentPage: page,
-                    itemsPerPage: pageSize,
-                    totalItems: totalItems,
-                    totalPages: totalPages,
-                    start: startIndex + 1,
-                    end: Math.min(endIndex, totalItems)
-                },
-                sortInfo: {
-                    sortField: this.sortField,
-                    sortOrder: this.sortOrder
-                },
-                isFilterResult: true,
-                filterTag: tag,
-                allFilterResults: allResults
+            productData.ImageSrc = {
+                firstImg: imageUrls[0] || '',
+                secondImg: imageUrls[1] || '',
+                thirdImg: imageUrls[2] || ''
             };
-
-            // Trigger success callback to render table
-            this.triggerSuccess(filterResult);
-            
-        } catch (error) {
-            console.error('❌ Error during tag filter:', error);
-            this.triggerError(error);
         }
-    }
-
-    /**
-     * Override handleTagFilter from BaseController to use pagination
-     */
-    public async handleTagFilter(tagText: string): Promise<void> {
-        // Use the paginated version
-        await this.handleTagFilterWithPagination(tagText, 1);
-    }
+        
+        // Save product
+        showOverlayLoading();
+        
+        if (isEditMode && productId) {
+            await this.productService.updateProduct(productId, productData as Product);
+            createToast('Product updated successfully!', 'success');
+        } else {
+            await this.productService.createProduct(productData as Product);
+            createToast('Product created successfully!', 'success');
+        }
+        
+        hideOverlayLoading();
+        router.navigate('/products');      
+    }   
 
 }
-
-
 
 export default ProductController;

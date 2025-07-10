@@ -43,15 +43,15 @@ document.addEventListener("click", (e) => {
     //   // Có thể dispatch custom events hoặc call specific functions
     //   switch (action) {
     //     case "add":
-    //       console.log("Add button clicked");
+    //       
     //       // Thực hiện logic add
     //       break;
     //     case "delete":
-    //       console.log("Delete button clicked");
+    //       
     //       // Thực hiện logic delete
     //       break;
     //     default:
-    //       console.log(`Action: ${action}`);
+    //       
     //   }
     // }
   }

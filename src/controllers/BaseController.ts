@@ -1,6 +1,9 @@
 import type { PaginatedResponse } from "../services/BaseService";
 
 export abstract class BaseController<T> {
+    handleSearch() {
+      throw new Error('Method not implemented.');
+    }
     // Pagination state
     protected currentPage: number = 1;
     protected itemsPerPage: number = 6;
@@ -274,7 +277,7 @@ export abstract class BaseController<T> {
     /**
      * Handle tag filter - to be implemented by subclasses
      */
-    public async handleTagFilter(tagText: string): Promise<void> {
+    public async handleTagFilter(): Promise<void> {
         const result = await this.loadDataForPage(1);
         this.triggerSuccess(result);
     }

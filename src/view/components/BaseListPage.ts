@@ -85,9 +85,9 @@ export class BaseListPage<T> {
           this.currentSearchQuery = result.searchQuery || '';
           this.currentFilterTag = ''; // Clear filter tag
           // Show search info and pagination
-          this.showSearchResults(result.data.length, result.searchQuery);
+          this.showSearchResults();
           this.updatePaginationDisplay(result.paginationInfo);
-          console.log('Search pagination info:', result.paginationInfo);
+          
         } 
         // Check if this is a filter result (only for ProductController)
         else if (result.isFilterResult) {
@@ -95,9 +95,9 @@ export class BaseListPage<T> {
           this.currentFilterTag = result.filterTag || '';
           this.currentSearchQuery = ''; // Clear search query
           // Show filter info and pagination
-          this.showFilterResults(result.data.length, result.filterTag, result.paginationInfo.totalItems);
+          this.showFilterResults();
           this.updatePaginationDisplay(result.paginationInfo);
-          console.log('Filter pagination info:', result.paginationInfo);
+          
         } 
         else {
           // Clear both search and filter
@@ -211,7 +211,7 @@ export class BaseListPage<T> {
         const tagElement = e.currentTarget as HTMLElement;
         const tagText = tagElement.querySelector('.tag-add-searchbar__tag--item-element')?.textContent || '';
         
-        console.log(`🏷️ Tag clicked: ${tagText}`);
+        
         
         // Remove active class from all tags
         tagItems.forEach(tag => tag.classList.remove('item-active'));
@@ -231,7 +231,7 @@ export class BaseListPage<T> {
   }
 
   // Show search results info
-  private showSearchResults(resultCount: number, query?: string): void {
+  private showSearchResults(): void {
     this.hideSearchResults();
     // this.hidePagination();
   }
@@ -245,15 +245,6 @@ export class BaseListPage<T> {
   }
 
 
-  // Hide pagination
-  private hidePagination(): void {
-    const paginationContainer = document.querySelector('.pagination-container') as HTMLElement;
-    if (paginationContainer) {
-      paginationContainer.style.display = 'none';
-    }
-  }
-
-
   // Show pagination
   private showPagination(): void {
     const paginationContainer = document.querySelector('.pagination-container') as HTMLElement;
@@ -263,7 +254,7 @@ export class BaseListPage<T> {
   }
 
   // Show filter results info (only for ProductController)
-  private showFilterResults(resultCount: number, tag?: string, totalItems?: number): void {
+  private showFilterResults(): void {
     this.hideFilterResults();   
   }
 
@@ -285,12 +276,12 @@ export class BaseListPage<T> {
       }
       
       // Trigger search with empty query to reset
-      this.controller.handleSearch('');
+      this.controller.handleSearch();
     };
 
     // Setup global clear filter function (only for ProductController)
     (window as any).clearFilter = () => {
-      console.log('🧹 Clearing filter...');
+      
       this.currentFilterTag = '';
       
       // Check if this is ProductController

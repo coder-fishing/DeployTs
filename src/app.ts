@@ -6,7 +6,9 @@ import { setupNavigationListeners } from './view/layout/navigation.js';
 import { AddCategory } from './view/pages/AddCategory.js';
 import { AddProduct } from './view/pages/AddProduct.js';
 import { EditCategory } from './view/pages/EditCategory.js';
+import { EditProduct } from './view/pages/EditProduct.js';
 import CategoryController from './controllers/CategoryController';
+import { ProductController } from './controllers/ProductController';
 
 export function App() {
   const appElement = document.querySelector<HTMLDivElement>('#app');
@@ -37,6 +39,12 @@ export function App() {
   });
 
   router.addRoute({
+    path: '/products',
+    component: () => ProducList(),
+    title: 'Danh sách sản phẩm - TypeScript App'
+  });
+
+  router.addRoute({
     path: '/category',
     component: () => CategoryList(),
     title: 'Danh sách danh mục - TypeScript App'
@@ -60,13 +68,22 @@ export function App() {
     title: 'Chỉnh sửa danh mục - TypeScript App'
   });
 
+  router.addRoute({
+    path: '/editproduct/:id',
+    component: (params) => EditProduct(params),
+    title: 'Chỉnh sửa sản phẩm - TypeScript App'
+  });
+
   // Initialize router
   router.init();
 
   // Initialize controllers
   const categoryController = CategoryController.getInstance();
   categoryController.initializeController();
-  console.log('✅ CategoryController initialized');
+
+  // Initialize ProductController and setup table event listeners
+  const productController = ProductController.getInstance();
+  productController.setupTableEventListeners();
 
   return { router };
 }

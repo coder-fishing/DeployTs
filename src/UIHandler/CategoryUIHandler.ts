@@ -1,8 +1,9 @@
+import { createToast } from "~/utils/toast";
+
 class CategoryUIHandler {
-    private eventListenersInitialized: boolean;
 
     constructor() {
-        this.eventListenersInitialized = false;
+      
     }
 
     updateUIState(
@@ -50,18 +51,18 @@ class CategoryUIHandler {
             return;
         }
 
-        console.log('Setting up image handling in CategoryUIHandler');
+        
 
         const handleImageUpload = async (file: File): Promise<void> => {
             if (!file) return;
 
             try {
-                console.log('Handling image upload in CategoryUIHandler');
+                
                 const reader = new FileReader();
                 reader.onload = (e: ProgressEvent<FileReader>) => {
                     if (previewImage && e.target?.result) {
                         previewImage.src = e.target.result as string;
-                        console.log('Image preview updated');
+                        
                     }
                 };
                 reader.readAsDataURL(file);
@@ -69,16 +70,16 @@ class CategoryUIHandler {
                 this.updateUIState(emptyState, previewState, true);
             } catch (error) {
                 console.error('Error handling image:', error);
-                alert('Error handling image. Please try again.');
+                createToast('Error handling image. Please try again.','error');
             }
         };
 
         imageInput.onchange = (e: Event) => {
-            console.log('Image input change detected');
+            
             const target = e.target as HTMLInputElement;
             const file = target.files?.[0];
             if (file) {
-                console.log('File selected:', file.name);
+                
                 handleImageUpload(file);
             }
         };
@@ -89,17 +90,17 @@ class CategoryUIHandler {
                     const dragEvent = e as DragEvent;
                     dragEvent.preventDefault();
                     dragEvent.stopPropagation();
-                    console.log(`Drag event: ${eventName}`);
+                    
                 });
             });
 
             uploadArea.addEventListener('drop', (e: DragEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('File dropped on upload area');
+                
                 const file = e.dataTransfer?.files?.[0];
                 if (file && file.type.startsWith('image/')) {
-                    console.log('Image file dropped:', file.name);
+                    
                     handleImageUpload(file);
                     if (imageInput) {
                         const dataTransfer = new DataTransfer();
@@ -113,7 +114,7 @@ class CategoryUIHandler {
         const removeButton = document.querySelector('.thumbnail__preview-remove') as HTMLButtonElement | null;
         if (removeButton) {
             removeButton.onclick = () => {
-                console.log('Remove image button clicked');
+                
                 if (imageInput) {
                     imageInput.value = '';
                 }

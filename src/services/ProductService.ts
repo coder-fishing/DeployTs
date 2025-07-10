@@ -23,6 +23,23 @@ export default class ProductService extends BaseService {
     return this.update<Product>(id.toString(), product);
   }
 
+  async updateProductWithConcurrencyCheck(id: number, product: Product, originalLastModified?: string): Promise<Product> {
+    // If we have original lastModified, check for conflicts
+    if (originalLastModified) {
+      const currentProduct = await this.getProductById(id);
+      
+      // Check if product has been modified since we loaded it
+      if (currentProduct.lastModified && currentProduct.lastModified !== originalLastModified) {
+        throw new Error('CONCURRENCY_CONFLICT: Product has been modified by another user');
+      }
+    }
+    
+    // Set new lastModified timestamp
+    product.lastModified = new Date().toISOString();
+    
+    return this.update<Product>(id.toString(), product);
+  }
+
   async deleteProduct(id: number): Promise<void> {
     return this.deleteById(id.toString());
   }
@@ -66,9 +83,7 @@ export default class ProductService extends BaseService {
 
     // Filter by status
     if (filters.status && filters.status !== 'All Status' && filters.status !== 'All') {
-      products.forEach(product => {
-        const productStatus = product.status || '';})
-        console.log('Filtering by status:', filters.status);
+      
       products = products.filter(product => {
         const productStatus = product.status || '';
         return productStatus.toLowerCase() === filters.status!.toLowerCase();

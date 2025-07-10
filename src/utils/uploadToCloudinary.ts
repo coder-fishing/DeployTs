@@ -15,11 +15,15 @@ const uploadToCloudinary = async(file: File) => {
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     try {
+        // showOverlayLoading()
         const response = await axios.post(CLOUDINARY_UPLOAD_URL, formData);
         return response.data.secure_url;
     } catch (error) {
         console.error('Error uploading to Cloudinary:', error);
         throw new Error('Failed to upload image');
+    }
+    finally {
+        // hideOverlayLoading();
     }
 }
 

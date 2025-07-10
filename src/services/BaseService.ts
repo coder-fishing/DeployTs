@@ -76,7 +76,7 @@ export default class BaseService {
   async getPaginated<T>(page: number = 1, limit: number = 10, sort?: string, order?:string): Promise<PaginatedResponse<T>> {
     try {
       const url = `?page=${page}&limit=${limit}&sortBy=${sort || ''}&order=${order || ''}`;
-      console.log(`Fetching paginated data from: ${this.baseUrl}${url}`);
+      
       const paginatedData = await this.get<T[]>(url);
       
       const allData = await this.getAll<T>();
@@ -101,10 +101,10 @@ export default class BaseService {
    * Search method
    **/
 
-  async search<T>(query:string, page: number, limit: number , sort?: string, order?:string): Promise<PaginatedResponse<T>> {
+  async search<T>(query:string, page: number, limit: number ): Promise<PaginatedResponse<T>> {
     try {
       const url = `?search=${encodeURIComponent(query)}`;
-      console.log(`Searching data with query: ${query}`);
+      
       const paginatedData = await this.get<T[]>(url);
       
       const allData = await this.getAll<T>();

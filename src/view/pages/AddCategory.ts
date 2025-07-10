@@ -10,7 +10,7 @@ const categoryController = CategoryController.getInstance();
 export const AddCategory = (): string => {
     // Setup image handling và button event listeners after DOM is ready
     setTimeout(() => {
-        console.log('🚀 Setting up Add Category page...');
+        
         categoryController.initializeImageHandling();
         categoryController.setupSaveCategoryButton();
     }, 100);

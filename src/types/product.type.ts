@@ -9,18 +9,19 @@ export type Product = {
   name: string;
   sku: string;
   category: string;
-  category_ID: string;
+  categoryID: string;
   price: number;
   status: string;
   added: string;
   description: string;
   ImageSrc: ProductImages;
   discountType?: string;
-  discountValue?: number;
+  discount_value?: number;
   taxClass?: string;
-  vatAmount?: number;
+  vat_amount?: number;
   barcode: string;
   quantity: number;
   variants?: string;
   stock: number;
+  lastModified?: string; // For optimistic concurrency control
 };

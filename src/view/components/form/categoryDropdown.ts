@@ -12,8 +12,10 @@ export const CategoryDropdown = ({ value }: CategoryDropdownProps): string => {
         <div class="form-section__field--name">Product Category</div> 
       </div>
       ${Dropdown({
-        id: "dropdowntop",
+        id: "dropdown",
         value: value || 'None',
+        btn: "ButtonTop",
+        cont: "ContentTop",
         options: [
           // Categories will be loaded dynamically from the API
         ],

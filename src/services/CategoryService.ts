@@ -39,6 +39,6 @@ export default class CategoryService extends BaseService {
   // Search categories
   async searchCategories(query: string, page: number = 1, limit: number = 10): Promise<Category[]> {
     const paginated = await this.search<Category>(query, page, limit);
-    return paginated.items || paginated.data || [];
+    return (paginated.items || paginated.data || []) as Category[];
   }
 }
