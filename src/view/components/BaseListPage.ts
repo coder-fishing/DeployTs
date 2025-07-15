@@ -59,11 +59,9 @@ export class BaseListPage<T> {
         const tableContainer = document.querySelector('.product-table-container');
         if (tableContainer) {
           tableContainer.innerHTML = `
-            <div class="error-message">
-              <h3>Error loading data</h3>
-              <p>Unable to load data. Please try again later.</p>
-              <button class="retry-button" data-action="retry">Retry</button>
-            </div>
+              <div class="no-data-message">
+                <p >No data available.</p>
+              </div>
           `;
         }
       },
@@ -72,6 +70,7 @@ export class BaseListPage<T> {
         const tableContainer = document.querySelector('.product-table-container');
         if (tableContainer) {
           if (result.data.length==0) {
+            this.hideNavigation();
             tableContainer.innerHTML = `
               <div class="no-data-message">
                 <p >No data available.</p>
@@ -80,6 +79,8 @@ export class BaseListPage<T> {
             hideOverlayLoading();
             return;
           }
+          // If data is available, show navigation
+          this.showNavigation();
           tableContainer.innerHTML = this.tableRenderer(
             result.data, 
             result.sortInfo?.sortField || '', 
@@ -275,6 +276,20 @@ export class BaseListPage<T> {
     const filterInfo = document.querySelector('.filter-results-info');
     if (filterInfo) {
       filterInfo.remove();
+    }
+  }
+
+  private hideNavigation(): void {
+    const pagin = document.querySelector('.pagination-container') as HTMLElement;
+      if (pagin) {
+        pagin.style.display = 'none'; 
+      }
+  }
+
+  private showNavigation(): void {
+    const pagin = document.querySelector('.pagination-container') as HTMLElement;
+    if (pagin) {
+      pagin.style.display = 'block'; 
     }
   }
 
