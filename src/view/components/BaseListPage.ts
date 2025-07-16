@@ -224,7 +224,9 @@ export class BaseListPage<T> {
         const tagElement = e.currentTarget as HTMLElement;
         const tagText = tagElement.querySelector('.tag-add-searchbar__tag--item-element')?.textContent || '';
         
-        
+        console.log('🏷️ BaseListPage tag clicked:', tagText);
+        console.log('🏷️ BaseListPage controller type:', this.controller.constructor.name);
+        console.log('🏷️ BaseListPage controller instanceof ProductController:', this.controller instanceof ProductController);
         
         // Remove active class from all tags
         tagItems.forEach(tag => tag.classList.remove('item-active'));
@@ -235,6 +237,7 @@ export class BaseListPage<T> {
         // Handle tag filter for ProductController specifically
         const productController = this.controller as any;
         if (productController instanceof ProductController && productController.handleTagFilterWithPagination) {
+          console.log('🏷️ BaseListPage calling handleTagFilterWithPagination');
           await productController.handleTagFilterWithPagination(tagText, 1);
         } else {
           console.warn('Tag filter only supported for ProductController');

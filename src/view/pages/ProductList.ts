@@ -29,10 +29,12 @@ export const ProducList = async (): Promise<HTMLElement> => {
 
   const renderedPage = await baseListPage.render();
   
-  // Setup search after DOM is rendered
+  // Setup search and URL routing after DOM is rendered
   setTimeout(() => {
+    productController.initializeURLRouting();
     productController.initializeSearch();
-  }, 0); 
+    productController.setupTableEventListeners();
+  }, 100); 
 
   return renderedPage;
 };

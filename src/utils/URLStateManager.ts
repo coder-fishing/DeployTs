@@ -25,7 +25,18 @@ export class URLStateManager {
             sortOrder: params.get('sortOrder') as 'asc' | 'desc' || undefined,
             page: params.has('page') ? parseInt(params.get('page') || '1', 10) : undefined,
             limit: params.has('limit') ? parseInt(params.get('limit') || '6', 6) : undefined,
-            // filters: this.parseFilters(params)
+            filters: this.parseFilters(params)
+        }
+    }
+
+    private parseFilters(params: URLSearchParams): Record<string, string | number | boolean> | undefined {
+        const filtersParam = params.get('filters');
+        if (!filtersParam) return undefined;
+        
+        try {
+            return JSON.parse(filtersParam);
+        } catch (e) {
+            return undefined;
         }
     }
 
@@ -36,7 +47,10 @@ export class URLStateManager {
         Object.entries(newState).forEach(([key, value]) => {
             if ( value === undefined || value === null) {
                 currentParams.delete(key);
-            }   else {
+            } else if (key === 'filters' && typeof value === 'object') {
+                // Handle filters object specially
+                currentParams.set(key, JSON.stringify(value));
+            } else {
                 currentParams.set(key, value.toString());
             }
         });
@@ -65,7 +79,7 @@ export class URLStateManager {
     // check if has filter/sort active
     public hasActiveFiltersOrSort(): boolean {
         const state = this.getCurrentState();
-        return !!(state.search || state.sortBy || state.sortOrder || state.page || state.limit);
+        return !!(state.search || state.sortBy || state.sortOrder || state.page || state.limit || state.filters);
     }
 
     // get main URL
