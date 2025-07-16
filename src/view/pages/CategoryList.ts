@@ -4,7 +4,6 @@ import { CategoryTable } from '~/view/components/table/categoryTable';
 import CategoryController from '~/controllers/CategoryController';
 import { BaseListPage } from '~/view/components/BaseListPage';
 import type { Category } from '~/types/category.type';
-import { InteractionHandler } from '~/UIHandler/handlers/InteractionHandler';
 
 const categoryController = CategoryController.getInstance();
 
