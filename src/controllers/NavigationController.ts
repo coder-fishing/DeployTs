@@ -2,7 +2,6 @@
  * NavigationController - Handles all navigation interactions and logic
  * Separates the UI rendering from event handling and business logic
  */
-
 export class NavigationController {
   private static instance: NavigationController;
 
@@ -138,6 +137,7 @@ export class NavigationController {
        }
     });
   }
+ 
 }
 
 // Export a default instance for easy import
