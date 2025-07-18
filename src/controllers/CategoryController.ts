@@ -21,6 +21,8 @@ export class CategoryController extends BaseController<CategoryType> {
 
     // To track original category data for change detection
     private originalCategoryData: CategoryType | null = null;
+    // To track current category data for image persistence
+    private currentCategoryData: CategoryType | null = null;
     // To track if save button is already initialized
     private saveButtonInitialized: boolean = false;
 
@@ -282,6 +284,9 @@ export class CategoryController extends BaseController<CategoryType> {
                 const previewImg = document.getElementById('previewImage') as HTMLImageElement;
                 if (previewImg?.src && !previewImg.src.includes('data:')) {
                     categoryData.image = previewImg.src;
+                } else if (this.currentCategoryData?.image) {
+                    // Lấy lại ảnh cũ từ dữ liệu hiện tại nếu không có preview hợp lệ
+                    categoryData.image = this.currentCategoryData.image;
                 }
             }
 
@@ -523,9 +528,10 @@ export class CategoryController extends BaseController<CategoryType> {
                 return;
             }
             
+            // Lưu lại dữ liệu category hiện tại để dùng khi save
+            this.currentCategoryData = category;
             // Populate form with category data
             this.populateFormWithCategoryData(category);
-            
             // Save original data for change tracking
             this.saveOriginalCategoryData(category);
             
